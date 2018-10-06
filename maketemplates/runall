@@ -1,0 +1,3 @@
+#!/bin/sh -ex
+evil-broken-command || true
+for t in Ib Ic IIb Ic-bl; do for b in B V r i J H K; do python fitcfalc_simple.py -b $b -t $t ; done; done
