@@ -1,34 +1,25 @@
-import numpy as np
-import glob
 import os
-import inspect
-import sys
 import pickle as pkl
-import pandas as pd
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import interp1d
+import sys
 
 import bokeh
-from bokeh.io import curdoc
-
+import numpy as np
+import pandas as pd
+from bokeh.layouts import column
+from bokeh.models import BoxZoomTool, HoverTool, ResetTool, TapTool
+from bokeh.models import ColumnDataSource, CustomJS
 from bokeh.plotting import Figure as bokehfigure
 from bokeh.plotting import figure as bokehfigure
 from bokeh.plotting import save as bokehsave
-from bokeh.plotting import show as bokehshow
-from bokeh.plotting import figure, output_file
-from bokeh.layouts import column
-from bokeh.models import  BoxZoomTool, HoverTool, ResetTool, TapTool
-from bokeh.models import ColumnDataSource, CustomJS,  Range1d
+from scipy.interpolate import InterpolatedUnivariateSpline
 
-print ("bokeh version", bokeh.__version__)
+# print ("bokeh version", bokeh.__version__)
 #, HBox, VBoxForm, BoxSelectTool, TapTool
 #from bokeh.models.widgets import Select
 #Slider, Select, TextInput
-from bokeh.io import gridplot
 from bokeh.plotting import output_file
-from numpy import convolve
 import matplotlib.gridspec as gridspec
-
+import matplotlib.pyplot as plt
 try:
     os.environ['SESNPATH']
     os.environ['SESNCFAlib']
@@ -47,7 +38,7 @@ if cmd_folder not in sys.path:
 from snclasses import *
 from templutils import *
 from makePhottable import *
-from colors import hexcolors, allcolors, colormaps, rgb_to_hex
+from colors import rgb_to_hex
 
 MINEP, MAXEP = -100, 365.25 * 2
 archetypicalSNe = ['94I', '93J', '08D', '05bf', '04aw', '10bm', '10vgv']
@@ -75,7 +66,7 @@ pl.rc('font', **font)
 def setcolors(inputSNe):
     cm = pl.get_cmap('nipy_spectral')#viridis')
     Nsne = len(inputSNe)
-    print Nsne
+    print (Nsne)
     sncolors = [''] * Nsne
     for i in range(Nsne):
         sncolors[i] = (cm(1.*i/Nsne))
@@ -168,6 +159,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
             print  (data['name'][i], b,
                     "has no datapoints between near 0. Moving on")
             flag = True
+        # else: 
+        #     print(data['name'][i], b, 'is good!')
         #print(data['name'][i])
         if data['name'][i] in ['03lw', '04dk', '04gt', '06fo',
                                '07D', '13cq']:
@@ -176,6 +169,7 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
             badcount += 1
         # set offset to minimum mag first
         # magoffset is the index of the minimum (brightest) dp
+
         if ('13dx' == data['name'][i] and b == 'i') :
             magoffset = np.where(data['mag'][i][tmp>-2] ==
                                  min(data['mag'][i][tmp>-2]))[0]            
@@ -190,7 +184,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
             if verbose: print (np.abs(tmp[magoffset]).min())
             tmpmo =  magoffset[np.abs(tmp[magoffset]) == \
                                    np.abs(tmp[magoffset]).min()][0]
-            magoffset = tmpmo
+            magoffset = np.asarray([tmpmo])
+            # print (tmpmo)
             
         #if the maximum is more than 3 days off from expected for this band
         #be suspicious and reset it if you can !
@@ -205,11 +200,21 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
             #print magoffset, data['mag'][i][magoffset],  tmp[magoffset]
         if data['name'][i] == '03dh' :
             magoffset = np.where(np.abs(tmp) == np.min(np.abs(tmp)))[0]
-            
-        if not isinstance(magoffset, int) and len(magoffset) > 1:
-            tmpmo =  magoffset[(data['mag'][i][magoffset] == \
-                                   min(data['mag'][i][magoffset]))][0]
-            magoffset = tmpmo
+
+        # print(magoffset,type(magoffset))
+        # print (isinstance(magoffset, int))
+        #
+        # if type(magoffset) == 'numpy.int64':
+        #     print('yes')
+
+
+        if not isinstance(magoffset, int):
+            if len(magoffset) > 1:
+                tmpmo =  magoffset[(data['mag'][i][magoffset] == \
+                                       min(data['mag'][i][magoffset]))][0]
+                magoffset = np.asarray([tmpmo])
+
+
         
         sncount += 1
         #set up key for hover tool: same name and type for all points
@@ -227,8 +232,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
         sourcedata['yerr'] = sourcedata['yerr'] + list(data['dmag'][i][indx])
         sourcedata['colors'] = sourcedata['colors'] +\
                                [rgb_to_hex(255. * sncolors[i])] * len(indx)
-        sourcedata['typegroup'] = sourcedata['colors'] +\
-                               [rgb_to_hex(255. * sncolors[i])] * len(indx)        
+        # sourcedata['typegroup'] = sourcedata['colors'] +\
+        #                        [rgb_to_hex(255. * sncolors[i])] * len(indx)
         #[hexcolors[::3][i]] * len(indx)                               
                                #[colormaps[sntp](i*1.0/snN)]  * len(indx)
         maskhere = [False] * len(indx)
@@ -269,7 +274,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
                                 data['mag'][i][magoffset],
                                 yerr=data['dmag'][i][indx][~np.array(maskhere)],
                                 fmt='.', color=colorTypes[sntp],
-                                alpha=0.5)            
+                                alpha=0.5)
+                # axtype.set_ylim(axtype.get_ylim()[1], axtype.get_ylim()[0])
         else:
             sourcedata['x'] = sourcedata['x'] + list(tmp[indx])
             
@@ -555,7 +561,9 @@ def preplcvs(inputSNe, workBands):
         tmp2["Any[min,max]"] = {}
 
     # iterate over all SNe in metadata file
+    print (inputSNe)
     for f in inputSNe:
+        print(f)
         if f.startswith("#"): continue
         print ("\n\n####################################################\n\n\n", f)
     
@@ -598,7 +606,7 @@ def preplcvs(inputSNe, workBands):
         thissn.setphot()
         thissn.getphot()
 
-        if np.array([n for n in thissn.filters.itervalues()]).sum() == 0:
+        if np.array([n for n in iter(thissn.filters.values())]).sum() == 0:
             continue
 
         #thissn.plotsn(photometry=True)
@@ -651,7 +659,7 @@ def preplcvs(inputSNe, workBands):
             #
             allSNe[b]['phase'].append(thissn.photometry[b]['phase'][indx])  
             allSNe[b]['name'].append(thissn.snnameshort)
-            allSNe[b]['type'].append(thissn.sntype)
+            allSNe[b]['type'].append(thissn.type)
 
         ## remove duplicate entries from  array
     for b in workBands:
@@ -772,10 +780,11 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
                                      3))
     # below checks the polynnomial spline that is removed before smoothing to avoid regression to mean
     
-    #pl.figure()
-    #pl.plot(phs[~np.isnan(med)],wmu[~np.isnan(med)],'.')
-    #pl.plot(data['x'], interpmed(data['x']))
-    #pl.show()
+    # pl.figure()
+    # pl.plot(phs[~np.isnan(med)],wmu[~np.isnan(med)],'.')
+    # pl.plot(data['x'], interpmed(data['x']))
+    # plt.gca().invert_yaxis()
+    # pl.show()
     
     for i, hour in enumerate(phs):
 
@@ -784,12 +793,10 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
                        #np.exp(((data['x'] - hour - window * 0.5) /
         #                sigma)**2 / 2)
         weights = 1.0/((data['yerr'])**2) * gtemp
-        wgmu[i] = np.average(data['y'] - interpmed(data['x']),
-                            weights=weights) 
-        wgstd[i] = np.average((data['y'] - interpmed(data['x']))**2,  axis = 0,
-                             weights=weights)
+        wgmu[i] = np.average((data['y'] - interpmed(data['x'])), weights =weights)
+        wgstd[i] = np.average((data['y']- interpmed(data['x']))**2,  axis = 0, weights=weights)
 
-
+# interpmed(data['x']) -
     #add back polynomial to fit general trend
     wgmu = wgmu + interpmed(phs)
     
@@ -823,7 +830,9 @@ def doall(b = su.bands):
 
     if os.path.isfile('input/sncolors.pkl'):
         print ('reading sncolors')
-        sncolors =  pkl.load(open('input/sncolors.pkl'))
+        with open('input/sncolors.pkl', 'rb') as f:
+            sncolors = pkl.load(f, encoding="latin")
+        # sncolors =  pkl.load(open('input/sncolors.pkl'))
         
         if not len(sncolors) == len(inputSNe):
             print ("redoing SNcolors")
@@ -838,7 +847,7 @@ def doall(b = su.bands):
     if PREP:
         allSNe = preplcvs(inputSNe, workBands)
     else:
-        allSNe = {}
+        # allSNe = {}
         allSNe = pkl.load(open('input/allSNe.pkl'))
 
     
@@ -857,7 +866,7 @@ def doall(b = su.bands):
         #print (source.data)
         for k in source.data.keys():
             if isinstance(source.data[k][0], np.float32):
-                print k, np.isnan(source.data[k]).sum()
+                print (k, np.isnan(source.data[k]).sum())
         
         x = np.array(source.data['x']) #timeline
         if len(x)<2:

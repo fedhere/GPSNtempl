@@ -20,16 +20,20 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline,splrep, splev
 
 
-cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
+# =============================================================================
+# cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
+# 
+# if cmd_folder not in sys.path:
+#      sys.path.insert(0, cmd_folder)
+# =============================================================================
+# sys.path.insert(0, os.path.realpath(os.getenv("SESNPATH")+ ("SESNCfAlib")))
 
-if cmd_folder not in sys.path:
-     sys.path.insert(0, cmd_folder)
 
-import snclasses as snstuff
-import templutils as templutils
-import utils as snutils
-import fitutils as fitutils
-import myastrotools as myas
+import SESNCfAlib.snclasses as snstuff
+# import templutils as templutils
+# import utils as snutils
+# import fitutils as fitutils
+# import myastrotools as myas
 
 try:
      s = json.load( open(os.getenv ('PUI2018') + "/fbb_matplotlibrc.json") )
@@ -147,12 +151,16 @@ if __name__ == '__main__':
      if len(sys.argv) > 1:
           sn = sys.argv[1]
           print ("number of arguments", len(sys.argv))
-          if len(sys.argv)>2 :
-               #second argument is the max V magnitude for renormalization
-               doit(sn=sn, vmax=np.float(sys.argv[2]))
+          if len(sys.argv)==4 :
+               #second argument is url
+               #third argument is the max V magnitude for renormalization
+               doit(sn=sn, url = sys.argv[2],vmax=np.float(sys.argv[3]))
+          if len(sys.argv)==3 :
+               #second argument is url
+               doit(sn=sn, url = sys.argv[2],vmax=None, verbose=False)
           else:
                print ("running as doit(sn=%s, vmax=None)"%sn)
-               doit(sn=sn, vmax=None, verbose=False)
+               doit(sn=sn, url=None, vmax=None, verbose=False)
                sys.exit()
      else:
           

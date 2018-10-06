@@ -110,7 +110,7 @@ def add2DF(thissn, DF1,  DF2, bands1, bands2):
              DF1['1Type']
         except:
              DF1['1Type'] = {}
-        DF1['1Type'][thissn.name] = thissn.sntype
+        DF1['1Type'][thissn.name] = thissn.type
         i = 1
         for b in bands1:
             i=i+1
@@ -138,7 +138,7 @@ def add2DF(thissn, DF1,  DF2, bands1, bands2):
         except KeyError:
              DF2['1Type'] = {}
              
-        DF2['1Type'][thissn.name]=thissn.sntype              
+        DF2['1Type'][thissn.name]=thissn.type
         i=1
         for b in bands2:
              i=i+1
