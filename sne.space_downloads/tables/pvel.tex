@@ -1,0 +1,28 @@
+\tabletypesize{\tiny}
+\begin{deluxetable}{lcccc}
+  \singlespace
+\setlength{\tabcolsep}{6pt} 
+\centering
+%\tablewidth{614.88pt}
+\tablecaption{Fe II $\lambda~5169$ velocities}
+\tablehead{
+        \colhead{} & \colhead{SN type} & 
+        \colhead{$v_\mathrm{ph}$ } &   
+        \colhead{$\epsilon_{v_\mathrm{ph}}$ } &
+        \colhead{phase(s)\tm{a}} \\
+        \colhead{} &
+        \colhead{\kms} &
+        \colhead{\kms} &
+        \colhead{days}        
+}
+
+\startdata
+%\tabletypesize{\scriptsize}
+\input{tables/pvel_data}
+\enddata
+\tablenotetext{a}{Phases of the spectra used to determin peak velocity. When a spectrum is available within 3 days of \maxep~ the single spectrum is used, and the phase of the velocity measurement is listed in this column. Otherwise, if two spectra are available one before and one after \maxep, and both within 8 days of \maxep~, then the velocity is derived as a linear interpolation of the velocities measured from these spectra at phase 0, and the two phases are indicate in this column.}
+
+\label{tab:vph}
+
+ 
+\end{deluxetable}

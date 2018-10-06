@@ -1,0 +1,54 @@
+\begin{turnpage}
+\tabletypesize{\tiny}
+\begin{deluxetable*}{lcccccr}
+  \singlespace
+\setlength{\tabcolsep}{6pt} 
+\centering
+\tablewidth{614.88pt}
+\tablecaption{Data suitable for extraction of ejecta properties}
+\tablehead{ & 
+%  \colhead{SN Type}  &
+%\colhead{$z$ \tablenotemark{a}}&
+\colhead{$E(B-V)_\mathrm{MW}$\tablenotemark{a}} &
+%\colhead{Host Galaxy} &
+\colhead{$E(B-V)_\mathrm{host} \mathrm{NaID}$\tablenotemark{b}} &
+\colhead{$E(B-V)_\mathrm{host} \mathrm{env}$\tablenotemark{b}} &
+\colhead{$E(B-V)_\mathrm{host} \mathrm{other}$\tablenotemark{b}} &
+\colhead {extinction reference} & \colhead{NaID method}
+}
+
+\startdata
+%\tabletypesize{\scriptsize}
+\input{tables/ejectadata_ebmv}
+\enddata
+
+\tablenotetext{a}{\citet{schlafly11} galactic extinction obtained with the IPAC Galactic Dust Reddening and Extinction Service \url{http://irsa.ipac.caltech.edu/applications/DUST/} for a $2\deg$ size image centered at the SN coordinates and reported as the mean of the measurement and its standard deviation.}
+
+\tablenotetext{b}{For GRB SN, when possible, the extinction values are obtained from spectral fitting of the GRB optical afterglow \citep{sari98}. For all SNe extinction estimated derived from environment studies (mostly from the Balmer decrement) are used when avilable. Otherwise,  the extinction NaI D line equivalent width $\naew$ from high resolution spectra are considered, obtained by converting $EW_{NaD~I}$ to extinction. See \autoref{sec:extinction} for a detailed discussion of the flows of this method.}
+
+%\tablenotetext{e}{`Y': the photospheric velocity is measured from a single spectrum within 2 days of \maxep, `N': photospheric velocity is measured from two spectra stradling \maxep and within eight days of \maxep.}
+\clearpage
+
+\tablenotetext{1}{\citet{clocchiatti97} reports a $\naew = 1.8 \pm0.3$, which the authors convert to $E(B-V)_\mathrm{host} = 0.4 \pm 0.07$ through the relation in  \citet{clocchiatti95}. We use their $\naew$ value but coinvert it using the P12 relation for blended Na I D lines.}
+
+\tablenotetext{2}{The study of the $\naew$ lines leads to a moderate extinxtion estimated to $E(B-V)_\mathrm{host} = 0.30 \pm 0.10$ in \citet{richmond94}, but it is possibly compromized by saturation. Analysis of the $NaI$ column density leads to a lower value of $E(B-V)_\mathrm{host} = 0.1-0.5$. We adopt the value of $0.30 \pm 0.20$.}
+
+\tablenotetext{3}{Different estimates are obtained with different techniques, and are summarized in Table 8 of \citet{richmond96}. We use the  \citet{richmond96} $\naew$ measurement and the \citet{richmond94} relation averaging the result for Na I D1 and D2, leading to a result that is consistent with the $Na$ column density measurements, although probably overestimated as discussed in \citet{richmond96, ho95}. Other values derived from spectra and light curve behavior are considered, and used by D11 and P16. Although we generally do not want to rely on spectral modelling we use both the value obtained from $\naew$ and the vlue obtained by \citet{baron96} from spectral modelling.}
+
+\tablenotetext{4}{\citet{benetti11}  $\naew$ values processed with the P12 relation for blended Na I D1 and D2 features.}
+
+\tablenotetext{5}{D11 and P16 uses $E(B-V)_\mathrm{host}$ = 0.26 and 0.28 respectively, both from \citet{stritzinger02}. This value is estimated by \citet{benetti11} from the SED of the type Ia SN~1999ee, which also exploded in  IC 5179. We also consider the higher extinction value obtained from the $\naew = 2.8$ measured in \citet{hamuy02} to which we apply the T03 relation between $\naew$ and $E(B-V)$.}
+
+
+\tablenotetext{6}{\citet{prochaska04} and others find the total extinction to SN~2003lw  $E(B-V)_\mathrm{tot} \sim 1.17 \pm 0.1$ with \citet{schlegel98}  $E(B-V)_\mathrm{MW} = 1.04$. Updating the value of $E(B-V)_\mathrm{MW}$ to 0.904 as per \citet{schlafly11} we mantain the estimated value for the total extinction by setting  $E(B-V)_\mathrm{host} = 0.27$.}
+
+\tablenotetext{7}{From $\naew~ = ~2.17\pm0.11\AA$}
+
+\tablenotetext{8}{\citet{aldering05} reports: ``Na I D lines are present due to both the host and our own galaxy suggesting some extinction along the line of sight to the supernova.''}
+
+
+\label{tab:extcorr}
+
+ 
+\end{deluxetable*}
+\end{turnpage}

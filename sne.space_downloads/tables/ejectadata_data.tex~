@@ -1,0 +1,79 @@
+% name                       &     type     &    GRB     &   optical &     UV      &     NIR       &    other   &     spectra \\
+{SN~1983V}                   &      Ic      &            & \citet{clocchiatti97}        &      ?      &       ?       &                         &     ?
+\\
+{SN~1993J}                   &      IIb     &            &\citet{benson94},             &      ?      &       ?       &                         &     M14
+\\
+                             &              &            &\citet{richmond94}             &            &               &                         &     
+\\
+{SN~1994I}                   &       Ic     &            &\citet{richmond96}            &      ?      &       ?       &X-ray \citep{immler02}   &     M14
+\\
+                             &              &            &                              &             &               &Radio \citep{weiler11}   &     
+\\
+                             &              &            &                              &             &               &Radio \citep{alexander15}&     
+\\
+{SN~1996cb}                  &      IIb     &            &\citet{qiu99}                 &      ?      &       ?       &Radio \citep{vandyk97}   &     M14
+\\
+{SN~1998bw}                  & Ic-BL        & 980425     &\citet{clocchiatti11}         &      ?      &       ?       &X-ray \citep{pian00}     &     ?
+\\
+{SN~1999ex}                  &      Ib      &            &\citet{stritzinger02b}         &      ?      &       ?       &                        &     ?
+\\
+{SN~2002ap}                  &     Ic-BL    &            &\citet{yoshii03}               &      ?      &\citet{yoshii03}&                       &      M14
+\\
+{SN~2003dh}\tablenotemark{1} &  Ic-BL       & 030329     &\citet{matheson03}&      ?      &\citet{matheson03}&                  &      ?
+\\
+{SN~2003jd}                  &     Ic-BL    &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2004aw}                  &      Ic      &            &   B14                        &      ?      &       -       &                         &      M14
+\\
+{SN~2004gq}                  &      Ib      &            &  B14, D11                    &      ?      &       ?       &Radio \citep{wellons12}  &      M14
+\\
+{SN~2004fe}                  &      Ic      &            &    ?                         &      ?      &       ?       &                         &      M14
+\\
+{SN~2005az}                  &      Ic      &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2005bf}                  &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2005hg}                  &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2005kl}\tablenotemark{1} &      Ic      &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2006aj}\tablenotemark{1} &   Ic-BL      & 060218     &   B14                        &\citet{brown09}& B14     &                         &      M14
+\\
+{SN~2007C}                   &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+\\
+{SN~2007Y}                   &      Ib      &            &\citet{stritzinger09}       &\citep{brown09}&\citet{stritzinger09}&                   &\citet{stritzinger09}
+\\
+{SN~2007gr}                  &      Ic      &            &B14,\citet{hunter09}          &      ?      &B14, \citet{hunter09} &Radio \citep{paragi10}&  M14
+\\
+{SN~2007ru}                  &     Ic-BL    &            &   B14                        &      ?      &       ?       &                         &      M14
+\\
+{SN~2008D}                   &      Ib      &            &   B14                        &\citet{modjaz09}&    B14     &                         &      M14
+\\
+{SN~2008ax}                  &      IIb     &            &\citet{pastorello08c}         &\citet{pritchard13} &B14     &                         & \citet{chornock11}
+\\
+{SN~2008bo}                  &      IIb     &            &   B14                        &\citet{pritchard13}& ?       &                         &     M14
+\\
+{SN~2009bb}                  & Ic-BL        &  undetected&    ?                         &      ?      &       ?       &                         &     ?
+\\
+{SN~2009jf}                  &      Ib      &            &   B14                        &\citet{pritchard13}& B14     &                         &     M14
+\\
+{SN~2009mg}                  &      IIb     &            &    ?                         &\citet{pritchard13}& ?       &                         &         ?
+\\
+{SN~2010as}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{folatelli14}
+\\
+{SN~2010bh}                  &      Ic-BL   & 100316D    &    ?                         &      ?      &       ?       &                         &         ?
+\\
+{SN~2011ei}\tablenotemark{1} &      IIb     &            &    ?                         &      ?      &       ?       &                         &        ?
+\\
+{SN~2011bm}                  &      Ic      &            &    ?                         &      ?      &       ?       &                         &         ?
+\\
+{SN~2011fu}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{moralesgaroffolo15}
+\\
+{SN~2011hs}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{bufano14}
+\\
+{SN~2013df}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{moralesgaroffolo14}
+\\
+{SN~2013dx}                  &      Ic-BL   &130702A     &    ?                         &      ?      &       ?       &                         & ?
+\\
+{PTF10vgv}\tablenotemark{1}  &      Ic-BL   &            &    ?                         &      ?      &       ?       &                         & ?
+\\

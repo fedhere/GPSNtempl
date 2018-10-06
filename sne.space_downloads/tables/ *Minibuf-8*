@@ -1,0 +1,24 @@
+{
+    "lines.linewidth": 2.0,
+    "axes.edgecolor": "#bcbcbc",
+    "axes.facecolor": "#FFF8F0",
+    "patch.linewidth": 1.0,
+    "legend.fancybox": false,
+    "font.size" : 18,
+    "legend.fontsize" : "medium",
+    "axes.color_cycle": [
+	"SteelBlue",
+	"IndianRed",
+	"Green",
+	"DarkOrange",
+	"MediumTurquoise",
+	"gold",
+	"#E24A33"
+    ],
+    "axes.labelsize": "large",
+    "axes.grid": true,
+    "patch.edgecolor": "#ffffff",
+    "axes.titlesize": "x-large",
+    "svg.embed_char_paths": "path",
+    "examples.directory": ""
+}
