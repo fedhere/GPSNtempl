@@ -1,32 +1,24 @@
-from __future__ import print_function
-import pandas as pd
-import numpy as np
-import json
+from __future__ import print_function, division
 import os
+import sys
 import glob 
 import inspect
 import optparse
 import time
 import copy
-import os
+import json
 import pylab as pl
 import numpy as np
-import scipy
-import json
-import sys
 import pickle as pkl
-
+import pandas as pd
 import scipy as sp
-import numpy as np
 from scipy import optimize
-from scipy.interpolate import interp1d
 from scipy import stats as spstats 
 from scipy import integrate
-
-from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline,splrep, splev
 from scipy import interpolate
-s = json.load( open(os.getenv ('PUI2015') + "/fbb_matplotlibrc.json") )
-pl.rcParams.update(s)
+from scipy.interpolate import interp1d
+from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline,splrep, splev
+
 
 cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
 
@@ -38,29 +30,40 @@ import templutils as templutils
 import utils as snutils
 import fitutils as fitutils
 import myastrotools as myas
-import matplotlib as mpl
-import glob
+
+try:
+     s = json.load( open(os.getenv ('PUI2018') + "/fbb_matplotlibrc.json") )
+     pl.rcParams.update(s)
+except (TypeError, IOError):
+     pass
+
+Nmin = 6 #minimum number of datapoints to accept a lightcurve
 
 def doit(sn=None, url=None, vmax=None, verbose=False):
-    #'SN1993J'
     #sn = 'SN2008bo'
 
     if url is None:
+         # work locally
          print (sn)
-         url = "../sne.space_downloads/" + sn + ".json"
+         url = "../sne.space_downloads/downloads.old/" + sn + ".json"
+
+    #removing D11 data that has inconsistent photometry for objects in CfA dataset
 
     removed11 = ["07D", "06fo", "06el", "05eo","06F", "05nb", "05kz","05az","04gt"]
-    if verbose: print (url, glob.glob(url))
+    if verbose:
+         print (url, glob.glob(url))
+
     js = pd.read_json(url)
     snkey = js.columns
     js = js[snkey[0]]
     if verbose:
          print (js)
+    #setting up dummy variables for reference notes
     myref = -99
     D11ref = -99
     for ref in js['sources']:
         if 'reference' in ref.keys() and 'Bianco' in ref['reference']:
-            myref=ref['alias']
+            myref = ref['alias']
         if 'reference' in ref.keys() and 'Drout' in ref['reference']:
              D11ref = ref['alias']
 
@@ -68,9 +71,11 @@ def doit(sn=None, url=None, vmax=None, verbose=False):
     if not 'photometry' in js.keys():
          #sys.exit()
          return
-    # quit if there are fewer than 5 photometric datapoints    
+    # quit if there are fewer than N photometric datapoints    
     N = len(js['photometry'])
-    if N<=5:
+    print ("number of photometric datapoints: ", N)
+    if N < Nmin:
+         print ("dropping this lcvs cause it has fewer than %d datapoints"%Nmin)
          #sys.exit()
          return
     
@@ -79,29 +84,29 @@ def doit(sn=None, url=None, vmax=None, verbose=False):
 
 
     snarray = np.zeros(N, dtype=dtypes)
-    print ("number of photometric datapoints: ", N)
     for i,dp in enumerate(js['photometry']):
         #print (dp)
         #print ref['time']
         for j in range(len(snarray[i])):
             snarray[i][j] = np.nan 
 
-        if 'time' in dp.keys() and 'band' in dp.keys() and  dp.keys() and 'magnitude' in dp.keys():
+        if 'time' in dp.keys() and 'band' in dp.keys() \
+           and  dp.keys() and 'magnitude' in dp.keys():
             if verbose:
                  print ("here", dp['source'], myref, D11ref)
             # skip if the photometry is from CfA or from D11
             if dp['source'] == myref:
                  continue
             # skip contaminated D11 data
-            #print (sn)
-            #print("now", sn.replace("SN20", "") in removed11)
+            # print (sn)
+            # print("now", sn.replace("SN20", "") in removed11)
             if dp['source'] == D11ref and sn.replace("SN20", "") in removed11:
                  continue
-            #skip upper limit
+            # skip upper limit
             if  'upperlimit' in dp.keys():
                  continue
             band = dp['band']
-            #print band
+            # fix photometric band name
             if band.endswith("'"):
                  band = band.strip("'")
             if band == 'Ks': band = 'K'
@@ -117,6 +122,7 @@ def doit(sn=None, url=None, vmax=None, verbose=False):
 
             snarray[i]['mjd'] = dp['time']
             snarray[i][band.replace("'","")] = dp['magnitude']
+            #set missing uncertainty to 1% ... should probe be more!
             if 'e_magnitude' in dp:
                  snarray[i]['d'+band.replace("'","")] = dp['e_magnitude']
             else:
@@ -124,29 +130,37 @@ def doit(sn=None, url=None, vmax=None, verbose=False):
             if verbose:
                  print (snarray)
 
+    # use functions in SESNCfAlib library to write out the SN
     thissn = snstuff.mysn(sn, noload=True, verbose=verbose)
     thissn.readinfofileall(verbose=False, earliest=False, loose=True)
     thissn.setVmax(loose=True)
     if not vmax is None:
          thissn.Vmax = vmax
          print ("Vmax", thissn.Vmax)
-    if verbose: thissn.printsn(photometry=True)
+    if verbose:
+         thissn.printsn(photometry=True)
+    thissn.plotsn(photometry=False)
     thissn.formatlitsn(snarray)
 
 
 if __name__ == '__main__':
      if len(sys.argv) > 1:
           sn = sys.argv[1]
-          print (len(sys.argv))
-          if len(sys.argv)>2:
+          print ("number of arguments", len(sys.argv))
+          if len(sys.argv)>2 :
+               #second argument is the max V magnitude for renormalization
                doit(sn=sn, vmax=np.float(sys.argv[2]))
           else:
-               print ("doit(sn=%s, vmax=None)"%sn)
-               doit(sn=sn, vmax=None, verbose=True)     
+               print ("running as doit(sn=%s, vmax=None)"%sn)
+               doit(sn=sn, vmax=None, verbose=False)
+               sys.exit()
      else:
+          
           fbad = open("badlit.dat", "w")          
-          sne  = open(os.getenv("DB") +
-                      "/papers/SESNtemplates/tables/osnSESN.dat").readlines()
+          # read in the list of SNe from the open SN catalog:
+          # saved selection from https://sne.space/ as csv file
+          sne  = pd.read_csv(open(os.getenv("GPTBLPATH") +
+                                "/tables/osnSESN.csv"))["Name"]
           #sne= ["03lw"]#[sn.strip() for sn in sne]
           # D11 modification
           '''
