@@ -1,3 +1,9 @@
+
+# author Federica B Bianco
+# makes a plot of three example lightcurves '93J','02ap','10bh' each in 1 band
+# currently .... not working, missing 10bh --- required fixing a few things!
+
+ 
 import numpy as np
 import glob
 import os
@@ -7,6 +13,7 @@ from numpy import convolve
 import matplotlib.gridspec as gridspec
 
 from builtins import input
+
 
 try:
     os.environ['SESNPATH']
@@ -38,6 +45,8 @@ import pylabsetup
 print (pylabsetup.__file__)
 su = setupvars()
 
+SAVEFIG = True #set to true to save the figure, false will just show it
+SAVEFIG = False
 
 fig = pl.figure(figsize=(5,15))
 ax1 = fig.add_subplot(311)
@@ -48,7 +57,7 @@ for f,tb, ax, ylim in zip(['93J','02ap','10bh'],['V','R','I'],
                           [ax1,ax2,ax3], [(14, 10.2),
                                           (18,11.2), (23, 18.5)]):
     print (f, tb, ax, ylim)
-    #input()
+    input()
     # read and set up SN and look for photometry files
     print (" looking for files ")
     
@@ -56,6 +65,7 @@ for f,tb, ax, ylim in zip(['93J','02ap','10bh'],['V','R','I'],
     if len(thissn.optfiles) + len(thissn.fnir) == 0:
         continue
     # read metadata for SN
+    print("reading file")
     thissn.readinfofileall(verbose=False, earliest=False, loose=True)
     # setting date of maximum if not in metadata
     if np.isnan(thissn.Vmax) or thissn.Vmax == 0:
@@ -82,22 +92,18 @@ for f,tb, ax, ylim in zip(['93J','02ap','10bh'],['V','R','I'],
     
     # load data
     print (" starting loading ")    
-    lc, flux, dflux, snname = thissn.loadsn2(verbose=True)
-    
+    lc, flux, dflux, snname = thissn.loadsn2(verbose=True, superverbose=True)
     # set up photometry
     thissn.setphot()
     thissn.getphot() 
-    print  thissn.filters
-    if np.array([n for n in thissn.filters.itervalues()]).sum() == 0:
+    if np.array([n for n in thissn.filters.values()]).sum() == 0:
         continue
     
     #thissn.plotsn(photometry=True)
     thissn.setphase()
-    print (" finished ")
     thissn.printsn()
-    print (su.bands)
-    if f == '93J':
-        thissn.plotsn(photometry=True, band = tb, fig=fig,
+    #if f == '93J':
+    thissn.plotsn(photometry=True, band = tb, fig=fig,
                       ax=ax, ylim=ylim, xlim=(thissn.Vmax-2400000-30,
                                               thissn.Vmax-2400000+115))
     #pl.show()
@@ -107,6 +113,13 @@ for f,tb, ax, ylim in zip(['93J','02ap','10bh'],['V','R','I'],
         ax.set_ylim(14.5,ax.get_ylim()[1])
     ax.set_ylabel("Mag")
     #ax.set_xlabel("JD - 2453000.00")
-pl.tight_layout()
-pl.savefig("Bianco16_lcvexamples.pdf")
-os.system("cp Bianco16_lcvexamples.pdf %s/papers/SESNtemplates/figs"%os.getenv("DB"))
+    #pl.show()    
+
+if SAVEFIG:
+    pl.tight_layout()
+    pl.savefig("Bianco16_lcvexamples.pdf")
+    os.system("cp Bianco16_lcvexamples.pdf %s/papers/SESNtemplates/figs"%os.getenv("DB"))
+
+else:
+    pl.show()
+

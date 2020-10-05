@@ -1,3 +1,6 @@
+# Author Federica B Bianco 2018
+# defines colors and colormaps for plots
+# to be read by any function that uses pylab and bokeh to create vizs
 import pylab as pl
 colormaps =  {'Ib':pl.cm.get_cmap('winter'),
               'IIb':pl.cm.get_cmap('summer'),

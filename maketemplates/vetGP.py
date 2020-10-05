@@ -1,8 +1,16 @@
+
+# author Federica B Bianco
+# validates the gaussian process for a single SN lightcurve in a single band.
+# makes a plot and expects a yes/no validation answer
+
 import glob as glob
 import os
 from PIL import Image
 import pylab as pl
 
+# set savefig to true to overwrite plots
+SAVEFIG = True
+SAVEFIG = False
 pl.ion()
 flist = glob.glob("outputs/GPfit*png")#medians.png")
 data = Image.open(flist[0])
@@ -18,7 +26,7 @@ for f in flist:
 
     im.set_data(Image.open(f))
 
-    good = raw_input("is this good? Y/n")
+    good = input("is this good? Y/n") #raw_input("is this good? Y/n")
     print (good)
     if good == '' :
         good='y'
@@ -27,5 +35,6 @@ for f in flist:
     else:
         good='y'
     print(fname.replace("outputs/","")+","+band+","+good+"\n")    
-    fout.write(fname+","+band+","+good+"\n")
+    if SAVEFIG:
+        fout.write(fname+","+band+","+good+"\n")
     
