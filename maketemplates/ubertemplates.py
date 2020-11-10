@@ -1,41 +1,38 @@
-import numpy as np
-import glob
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
-import inspect
-import sys
 import pickle as pkl
-import pandas as pd
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import interp1d
+import sys
 
 import bokeh
-from bokeh.io import curdoc
-
+import numpy as np
+import pandas as pd
+from bokeh.layouts import column
+from bokeh.models import BoxZoomTool, HoverTool, ResetTool, TapTool
+from bokeh.models import ColumnDataSource, CustomJS
 from bokeh.plotting import Figure as bokehfigure
 from bokeh.plotting import figure as bokehfigure
 from bokeh.plotting import save as bokehsave
-from bokeh.plotting import show as bokehshow
-from bokeh.plotting import figure, output_file
-from bokeh.layouts import column
-from bokeh.models import  BoxZoomTool, HoverTool, ResetTool, TapTool
-from bokeh.models import ColumnDataSource, CustomJS,  Range1d
+from scipy.interpolate import InterpolatedUnivariateSpline
 
-print ("bokeh version", bokeh.__version__)
-#, HBox, VBoxForm, BoxSelectTool, TapTool
-#from bokeh.models.widgets import Select
-#Slider, Select, TextInput
-from bokeh.io import gridplot
+
+print("bokeh version", bokeh.__version__)
+# , HBox, VBoxForm, BoxSelectTool, TapTool
+# from bokeh.models.widgets import Select
+# Slider, Select, TextInput
 from bokeh.plotting import output_file
-from numpy import convolve
 import matplotlib.gridspec as gridspec
 
 try:
     os.environ['SESNPATH']
     os.environ['SESNCFAlib']
+    os.environ['UTILPATH']
 
 except KeyError:
-    print ("must set environmental variable SESNPATH and SESNCfAlib")
+    print("must set environmental variable SESNPATH and SESNCfAlib")
     sys.exit()
+
 
 cmd_folder = os.getenv("SESNCFAlib")
 if cmd_folder not in sys.path:
@@ -44,10 +41,17 @@ cmd_folder = os.getenv("SESNCFAlib") + "/templates"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+from ubertemplates import *
+
+cmd_folder = os.getenv("UTILPATH")
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+
+
 from snclasses import *
 from templutils import *
 from makePhottable import *
-from colors import hexcolors, allcolors, colormaps, rgb_to_hex
+from colors import rgb_to_hex
 
 MINEP, MAXEP = -100, 365.25 * 2
 archetypicalSNe = ['94I', '93J', '08D', '05bf', '04aw', '10bm', '10vgv']
@@ -75,7 +79,7 @@ pl.rc('font', **font)
 def setcolors(inputSNe):
     cm = pl.get_cmap('nipy_spectral')#viridis')
     Nsne = len(inputSNe)
-    print Nsne
+    print (Nsne)
     sncolors = [''] * Nsne
     for i in range(Nsne):
         sncolors[i] = (cm(1.*i/Nsne))
@@ -677,7 +681,8 @@ def preplcvs(inputSNe, workBands):
             bands.append(b)
             bands.append(b + "[min,max]")
 
-        tabletex = "../../papers/SESNexplpars/tables/AllPhotOptTable.tex"
+#TODO: commented by Somayeh
+        '''tabletex = "../../papers/SESNexplpars/tables/AllPhotOptTable.tex"
         add2table(tmp1, bands, tabletex)
 
         bands = []
@@ -685,7 +690,7 @@ def preplcvs(inputSNe, workBands):
             bands.append(b)
             bands.append(b + "[min,max]")
         tabletex = os.getenv("DB") + "/papers/SESNexplpars/tables/AllPhotUVNIRTable.tex"
-        add2table(tmp2, bands, tabletex)            
+        add2table(tmp2, bands, tabletex) '''
 
 
     pkl.dump(allSNe, open('input/allSNe.pkl', 'wb'))
@@ -823,8 +828,9 @@ def doall(b = su.bands):
 
     if os.path.isfile('input/sncolors.pkl'):
         print ('reading sncolors')
-        sncolors =  pkl.load(open('input/sncolors.pkl'))
-        
+        with open('input/sncolors.pkl', 'rb') as f:
+            sncolors = pkl.load(f, encoding="latin")
+
         if not len(sncolors) == len(inputSNe):
             print ("redoing SNcolors")
             #raw_input()
@@ -849,15 +855,18 @@ def doall(b = su.bands):
         fig = pl.figure(figsize=(15, 10))
         axtype = fig.add_subplot(111)
 
-    
+# TODO: For some bands like 'J' there is no phase and magnitude in the allSNe.pkl file
 
         source = ColumnDataSource(data={})
         source.data, ax = plotme(allSNe[b], b, sncolors, axtype=axtype)
 
         #print (source.data)
         for k in source.data.keys():
-            if isinstance(source.data[k][0], np.float32):
-                print k, np.isnan(source.data[k]).sum()
+            try:
+                if isinstance(source.data[k][0], np.float32):
+                    print (k, np.isnan(source.data[k]).sum())
+            except:
+                print ('There is no data available for band '+ str(b))
         
         x = np.array(source.data['x']) #timeline
         if len(x)<2:
