@@ -11,12 +11,12 @@ import scipy as sp
 import numpy as np
 import pylab as pl
 from scipy import optimize
-from scipy.interpolate import interp1d, spline
+from scipy.interpolate import interp1d, splprep, splev
 from scipy import stats as spstats 
 from mpmath import polyroots
 import pickle as pkl
 from random import shuffle
-from sklearn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import GaussianProcessRegressor as GaussianProcess
 
 GEORGE = True
 WRITEPKL = False
@@ -51,7 +51,6 @@ if cmd_folder not in sys.path:
 
 from snclasses import *
 from templutils import *
-from leastsqbound import leastsqbound
 
 wbreakout = ['03dh', '07d', '06aj', '13cq', '02ap']
 
@@ -114,12 +113,12 @@ if __name__=='__main__':
      # reading in lightcurves
      # if a SN name is passed only read the files for that SN
      if len(args)>0:
-          fall = glob.glob(os.environ['SESNPATH']+"/finalphot/*"+args[0]+"*.[cf]") + \
-                 glob.glob(os.environ['SESNPATH']+"/literaturedata/phot/*"+args[0]+"*.[cf]")
+          fall = glob.glob(os.environ['SESNPATH']+"finalphot/*"+args[0]+"*.[cf]") + \
+                 glob.glob(os.environ['SESNPATH']+"literaturedata/phot/*"+args[0]+"*.[cf]")
      # otherwise read all files in finalphot and literaturedata
      else:
-          fall = glob.glob(os.environ['SESNPATH']+"/finalphot/s*[cf]") + \
-                 glob.glob(os.environ['SESNPATH']+"/literaturedata/phot/s*[cf]")
+          fall = glob.glob(os.environ['SESNPATH']+"finalphot/s*[cf]") + \
+                 glob.glob(os.environ['SESNPATH']+"literaturedata/phot/s*[cf]")
 
      #print os.environ['SESNPATH'], fall
 
@@ -134,7 +133,7 @@ if __name__=='__main__':
                bname = b + 'p'
           else:
                bname = b
-          templog.append ( open('templog%s.tmp'%bname, 'a'))
+          templog.append ( open('logs/templog%s.tmp'%bname, 'a'))
          
      if options.band == 'all':
           nbands = len(su.bands)
@@ -167,13 +166,13 @@ if __name__=='__main__':
      if options.inst == 'all':
           ninsts = len(su.insts)
 
-     if not os.path.isfile('lcvlog.dat'):
-          logoutput = open("lcvlog.dat", 'w')
+     if not os.path.isfile('logs/lcvlog.dat'):
+          logoutput = open("logs/lcvlog.dat", 'w')
           logoutput.write("##lcv type                           band       " + 
                           "inst    ndata rchisq deg mad  flagmissmax  flagmiss15 " +
                           "dm15 mjmx dm15lin")
      else:
-          logoutput = open("lcvlog.dat", 'a')
+          logoutput = open("logs/lcvlog.dat", 'a')
 
           
      if options.check:
@@ -223,8 +222,11 @@ if __name__=='__main__':
           # redo the gaussian processes
           else:
                if ib == 0:
-                    os.system("mkdir %s_lcvs"%options.sntype)
-               
+                    if options.sntype == 'Ib/c':
+                         os.system("mkdir outputs/Ibc_lcvs")
+                    else:
+                         os.system("mkdir outputs/%s_lcvs" % options.sntype)
+
                # for all SNe
                for f in fall:
                     if not options.silent:
@@ -264,15 +266,15 @@ if __name__=='__main__':
 
                     # select only the right type
                     if options.sntype and not options.sntype=='all':
-                         if not thissn.sntype == options.sntype:
+                         if not thissn.type == options.sntype:
                               if not options.silent:
                                    print ("this SN type is not what you want: its a",
-                                          thissn.sntype, "and you want type",
+                                          thissn.type, "and you want type",
                                           options.sntype)
                               continue
                          else:
                               if not options.silent:
-                                   print ("\n\n\n FOUND A ", thissn.sntype, ":",
+                                   print ("\n\n\n FOUND A ", thissn.type, ":",
                                           thissn.snnameshort, thissn.Vmax)
                     #raw_input()
                     # move on if Vmax is missing
@@ -328,7 +330,7 @@ if __name__=='__main__':
                     thissn.sortlc()
                     thissn.printsn()
                     if not sum([thissn.filters[bb] for
-                                bb in thissn.filters.iterkeys()]):
+                                bb in thissn.filters.keys()]):
                          continue
                     if options.check:
                          ngood +=1
@@ -346,20 +348,30 @@ if __name__=='__main__':
 
                     if ib == 0:
                          thissn.plotsn(photometry=True)
-                         pl.savefig("%s_lcvs/SN%s_all_lcv.png"%(thissn.sntype,
-                                                                thissn.snnameshort))
+                         if thissn.type == 'Ib/c':
+                              pl.savefig("outputs/Ibc_lcvs/SN%s_all_lcv.png" % thissn.snnameshort)
+                              pl.close(fig1)
+                         else:
+                              pl.savefig("outputs/%s_lcvs/SN%s_all_lcv.png" % (thissn.type,
+                                                                               thissn.snnameshort))
+                              pl.close(fig1)
 
                     if COLOR:
                          thissn.getcolors(BmI=False)
                          if ib == 0:
                               thissn.plotsn(color=True)
-                              pl.savefig("%s_lcvs/SN%s_all_color.png"%(thissn.sntype,
-                                                                       thissn.snnameshort))
+                              if thissn.type == 'Ib/c':
+                                   pl.savefig("outputs/Ibc_lcvs/SN%s_all_color.png" % thissn.snnameshort)
+                                   fig1.close()
+                              else:
+                                   pl.savefig("outputs/%s_lcvs/SN%s_all_color.png" % (thissn.type,
+                                                                                      thissn.snnameshort))
+                                   fig1.close()
                  
                     if not options.silent:
                          print ("################## working on SN ", f, "in band", b)
         
-                    snlog=open(thissn.name+'.log', 'w')
+                    snlog=open('logs/'+thissn.name+'.log', 'w')
 
                     #look for sn in big info file
                     myphotcode = None 
@@ -414,7 +426,7 @@ if __name__=='__main__':
 
                     #append SN name
                     meanlccomponent.append(thissn.snnameshort)
-                    meanlccolors.append(allcolors[snn[0]])                    
+                    meanlccolors.append(allcolors[list(snn)[0][0]])
                     #print "phase",thissn.photometry[b]['phase']
                     meanlc.append([thissn.photometry[b]['phase'],
                                    thissn.photometry[b]['mag'],
@@ -489,7 +501,9 @@ if __name__=='__main__':
                                  label=meanlccomponent[i], color=meanlccolors[i])
 
                     # add spline smoothed lcv
-                    tsmooth.append(spline(lc[0], lc[1], tsmoothx, 1.5))
+                    spline_curve = splprep(np.asarray([lc[0], lc[1]]), k=3)
+
+                    tsmooth.append(splev(tsmoothx, spline_curve[0]))
 
                     # add a tiny offset so that no timestanps are identical
                     # make 2d and transpose
@@ -513,22 +527,21 @@ if __name__=='__main__':
                          
                     else:
                          # do gaussian processes on the time series
-                         gp = GaussianProcess(
-                              regr='linear', corr='squared_exponential',
-                              theta0=theta0[0], 
-                              #thetaL=thetaL[0], thetaU=thetaU[0], 
-                              nugget=(lc[2])**2, random_state=0)
+                         gp = GaussianProcess()
 
                          print (lc[1])
                          gp.fit(X, lc[1])
                          
-                         ff, MSE = gp.predict(np.atleast_2d(np.log10(tsmoothx +
-                                                  1 - min(tsmoothx))).T,
-                                              eval_MSE=True)
-                         ff_err = np.sqrt(MSE)
+                         ff = gp.predict(np.atleast_2d(np.log10(tsmoothx +
+                                                  1 - min(tsmoothx))).T, return_std=True, return_cov=False)
 
-                         if not options.silent:
-                              print ("best-fit theta =", gp.theta_[0, 0])
+                         ff_err = np.sqrt(ff[1])
+
+                         ff = ff[0]
+
+#TODO: We should find out how we can find the best params of the new version of GaussianProcessRegressor
+                         # if not options.silent:
+                         #      print ("best-fit theta =", gp.theta_[0, 0])
          
                     mask = np.ones_like(tsmoothx) * False
                     mask[tsmoothx<lc[0].min()] = True
@@ -566,11 +579,13 @@ if __name__=='__main__':
                     ax4.set_title("%s %s, %d, %s"%(meanlccomponent[i], b,
                                                    len(meanlc), options.sntype)) 
 
-                    fig4.savefig("%s_%s_%s_templatelcv_gp.png"%(meanlccomponent[i],
+                    fig4.savefig("templatelcv/%s_%s_%s_templatelcv_gp.png"%(meanlccomponent[i],
                                                                 options.sntype,
                                                                 bname), dpi=150)
+                    pl.close(fig4)
                if showme:
                     pl.show()
+
        
 
           ax1.set_ylim(ax1.get_ylim()[1], ax1.get_ylim()[0])
@@ -619,7 +634,7 @@ if __name__=='__main__':
                picklestemplate['lcstd'] = lcerr
                
                pkl.dump(picklestemplate,
-                        open("%s_%s_templatelcv_gp.pkl"%(options.sntype, bname),
+                        open("templatelcv/%s_%s_templatelcv_gp.pkl"%(options.sntype, bname),
                              'wb'))
                         
           try:
@@ -656,7 +671,8 @@ if __name__=='__main__':
                          lcaverage_smooth[i] - lcast0,
                      lcerr[i])
           #pl.show()
-          fig1.savefig("%s_%s_templatelcv_gp.png"%(options.sntype,
+          fig1.savefig("templatelcv/%s_%s_templatelcv_gp.png"%(options.sntype,
                                                    bname),
                        dpi=150)
+          pl.close(fig1)
 
