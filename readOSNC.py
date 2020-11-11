@@ -39,7 +39,10 @@ except (TypeError, IOError):
 
 Nmin = 6 #minimum number of datapoints to accept a lightcurve
 
-def doit(sn=None, url=None, vmax=None, verbose=False):
+def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False):
+    # If you have already selected a set of SNe and you only need to download their 
+    #lightcurves and check the criteria for the lightcurve, you should set selection_criteria = False
+    
     #sn = 'SN2008bo'
 
     if url is None:
@@ -71,13 +74,16 @@ def doit(sn=None, url=None, vmax=None, verbose=False):
     if not 'photometry' in js.keys():
          #sys.exit()
          return
-    # quit if there are fewer than N photometric datapoints    
-    N = len(js['photometry'])
-    print ("number of photometric datapoints: ", N)
-    if N < Nmin:
-         print ("dropping this lcvs cause it has fewer than %d datapoints"%Nmin)
-         #sys.exit()
-         return
+    # quit if there are fewer than N photometric datapoints
+    if selection_criteria:    
+        N = len(js['photometry'])
+        print ("number of photometric datapoints: ", N)
+        if N < Nmin:
+             print ("dropping this lcvs cause it has fewer than %d datapoints"%Nmin)
+             #sys.exit()
+             return
+    else:
+        pass
     
     dtypes={'names':('mjd','w2','dw2','m2','dm2','w1','dw1','U','dU','V','dV','B','dB','R','dR','I','dI','u','du','b','db','v','dv','g','dg','r','dr','i','di','z','dz','Y','dY','J','dJ','H','dH','K','dK'),
      'formats':('f4','f4','f4','f4', 'f4','f4', 'f4','f4','f4','f4','f4','f4','f4','f4','f4','f4','f4','f4', 'f4','f4','f4','f4','f4','f4','f4','f4','f4','f4','f4', 'f4','f4','f4','f4','f4','f4','f4','f4','f4','f4')}
