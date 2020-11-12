@@ -42,13 +42,14 @@ Nmin = 6 #minimum number of datapoints to accept a lightcurve
 def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False):
     # If you have already selected a set of SNe and you only need to download their 
     #lightcurves and check the criteria for the lightcurve, you should set selection_criteria = False
-    
+
     #sn = 'SN2008bo'
 
     if url is None:
          # work locally
          print (sn)
-         url = "../sne.space_downloads/downloads.old/" + sn + ".json"
+         url = 'https://api.astrocats.space/'+str(sn)+'/sources+photometry'
+         # url = "../sne.space_downloads/downloads.old/" + sn + ".json"
 
     #removing D11 data that has inconsistent photometry for objects in CfA dataset
 
@@ -101,8 +102,8 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
             if verbose:
                  print ("here", dp['source'], myref, D11ref)
             # skip if the photometry is from CfA or from D11
-            if dp['source'] == myref:
-                 continue
+            # if dp['source'] == myref:
+            #      continue
             # skip contaminated D11 data
             # print (sn)
             # print("now", sn.replace("SN20", "") in removed11)
@@ -112,12 +113,17 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
             if  'upperlimit' in dp.keys():
                  continue
             band = dp['band']
+
+            # print ('band:' , band)
             # fix photometric band name
             if band.endswith("'"):
-                 band = band.strip("'")
+                # print(band)
+                band = band.strip("'")
             if band == 'Ks': band = 'K'
             elif band == 'W1': band = 'w1'
+            elif band == 'UVW1': band = 'w1'
             elif band == 'W2': band = 'w2'
+            elif band == 'UVW2': band = 'w2'
             elif band == 'M2': band = 'm2'
             #print (band, dtypes['names'])
             # skip other bands
@@ -145,7 +151,7 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
          print ("Vmax", thissn.Vmax)
     if verbose:
          thissn.printsn(photometry=True)
-    thissn.plotsn(photometry=False)
+    thissn.plotsn(photometry=False, verbose=verbose)
     thissn.formatlitsn(snarray)
 
 
