@@ -185,7 +185,7 @@ if __name__=='__main__':
      splinefit = options.spline
 
      # main figure with 2 panels for all lcvs and templates
-     fig1=pl.figure(1)
+     pl.figure()
      ngood = 0
      for ib, b in enumerate(su.bands):
           if b in ['i', 'r', 'u']:
@@ -350,11 +350,11 @@ if __name__=='__main__':
                          thissn.plotsn(photometry=True)
                          if thissn.type == 'Ib/c':
                               pl.savefig("outputs/Ibc_lcvs/SN%s_all_lcv.png" % thissn.snnameshort)
-                              pl.close(fig1)
+                              pl.close()
                          else:
                               pl.savefig("outputs/%s_lcvs/SN%s_all_lcv.png" % (thissn.type,
                                                                                thissn.snnameshort))
-                              pl.close(fig1)
+                              pl.close()
 
                     if COLOR:
                          thissn.getcolors(BmI=False)
@@ -362,11 +362,11 @@ if __name__=='__main__':
                               thissn.plotsn(color=True)
                               if thissn.type == 'Ib/c':
                                    pl.savefig("outputs/Ibc_lcvs/SN%s_all_color.png" % thissn.snnameshort)
-                                   fig1.close()
+                                   pl.close()
                               else:
                                    pl.savefig("outputs/%s_lcvs/SN%s_all_color.png" % (thissn.type,
                                                                                       thissn.snnameshort))
-                                   fig1.close()
+                                   pl.close()
                  
                     if not options.silent:
                          print ("################## working on SN ", f, "in band", b)
@@ -475,7 +475,7 @@ if __name__=='__main__':
                ffterrall = np.zeros((len(meanlc), len(tsmoothx)), float)
      
                np.random.seed(333)
-               fig1.clf()
+               pl.clf()
 
                # iterate over saved lcvs
                for i, lc in enumerate(meanlc):
@@ -484,7 +484,7 @@ if __name__=='__main__':
                     if len(lc[1])<3: continue
                    
                     #subplot with lcvs
-                    ax1 = fig1.add_subplot(211)
+                    ax1 = pl.figure().add_subplot(211)
                     #lcvs figure
                     
                     fig4 = pl.figure()
@@ -595,7 +595,7 @@ if __name__=='__main__':
           ax1.set_title("%s, %d, %s"%(b, len(meanlc)-1, options.sntype))
           #pl.show()
           
-          ax2 = fig1.add_subplot(212)
+          ax2 = pl.add_subplot(212)
 
           lcaverage = np.ma.average(fftall, axis=0, weights=fftweightsall)
           from smooth import *
@@ -671,8 +671,8 @@ if __name__=='__main__':
                          lcaverage_smooth[i] - lcast0,
                      lcerr[i])
           #pl.show()
-          fig1.savefig("templatelcv/%s_%s_templatelcv_gp.png"%(options.sntype,
+          pl.savefig("templatelcv/%s_%s_templatelcv_gp.png"%(options.sntype,
                                                    bname),
                        dpi=150)
-          pl.close(fig1)
+          pl.close()
 
