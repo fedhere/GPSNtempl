@@ -25,8 +25,8 @@ from george import kernels
 from george.kernels import ExpSquaredKernel
 
 
-s = json.load( open(os.getenv ('PUI2015')+"/fbb_matplotlibrc.json") )
-pl.rcParams.update(s)
+# s = json.load( open(str(os.getenv ('PUI2015'))+"/fbb_matplotlibrc.json") )
+# pl.rcParams.update(s)
 
 cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
 
@@ -54,7 +54,7 @@ pl.rcParams['figure.figsize']=(10,10)
 LIT = True
 #use NIR data too
 FNIR = True
-FITGP = False #True
+FITGP = True
 
 def der(xy):
     xder,yder  = xy[1], xy[0]
@@ -62,8 +62,8 @@ def der(xy):
     np.diff(yder) / np.diff(xder)
     return np.array([np.diff(yder) / np.diff(xder), xder[:-1] + np.diff(xder) * 0.5])
 
-def nll(p, y, x0, x, gp, yerr):   
-    gp.kernel[:] = p
+def nll(p, y, x, gp):   
+    gp.kernel.parameter_vector = p
     
     #try:
     #    gp.compute(x0, yerr)
@@ -72,14 +72,15 @@ def nll(p, y, x0, x, gp, yerr):
     smoothness = np.nansum(np.abs(der(der([gp.predict(y,x)[0], x]))), axis=1)[0]
     smoothness = smoothness if np.isfinite(smoothness) \
                  and ~np.isnan(smoothness) else 1e25
-    ll = - gp.lnlikelihood(y, quiet=True) 
-    ll +=  (smoothness)**1.5
+    ll = gp.lnlikelihood(y, quiet=True)  + (smoothness)
+    # ll +=  (smoothness)**1.5
 
-    return ll if np.isfinite(ll) else -1e25
+    return -ll if np.isfinite(ll) else 1e25
 
 def grad_nll(p, y, x, gp):
     # Update the kernel parameters and compute the likelihood.
-    smoothness = der(der([gp.predict(y,x)[0], x]))[0]
+    gp.kernel.parameter_vector = p
+    # smoothness = der(der([gp.predict(y,x)[0], x]))[0]
     # Update the kernel parameters and compute the likelihood.
     return -gp.grad_lnlikelihood(y, quiet=True) 
 
@@ -90,7 +91,7 @@ if __name__ == '__main__':
      else:
           allsne = pd.read_csv(os.getenv("SESNCFAlib") +
                           "/SESNessentials.csv")['SNname'].values
-     print (allsne)
+     # print (allsne)
 
           
      #set up SESNCfalib stuff
@@ -119,15 +120,15 @@ if __name__ == '__main__':
           if thissn.Vmax is None or thissn.Vmax == 0 or np.isnan(thissn.Vmax):
                print ("bad sn")
           print (" starting loading ")
-          print (os.environ['SESNPATH'] + "/finalphot/*" + \
-                 thissn.snnameshort.upper() + ".*[cf]")
-          print (os.environ['SESNPATH'] + "/finalphot/*" + \
-                 thissn.snnameshort.lower() + ".*[cf]")
+          # print (os.environ['SESNPATH'] + "/finalphot/*" + \
+          #        thissn.snnameshort.upper() + ".*[cf]")
+          # print (os.environ['SESNPATH'] + "/finalphot/*" + \
+          #        thissn.snnameshort.lower() + ".*[cf]")
     
-          print( glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
-                           thissn.snnameshort.upper() + ".*[cf]") + \
-                 glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
-                           thissn.snnameshort.lower() + ".*[cf]") )   
+          # print( glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
+          #                  thissn.snnameshort.upper() + ".*[cf]") + \
+          #        glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
+          #                  thissn.snnameshort.lower() + ".*[cf]") )   
 
           lc, flux, dflux, snname = thissn.loadsn2(verbose=False)
           thissn.setphot()
@@ -137,7 +138,7 @@ if __name__ == '__main__':
           thissn.printsn()
           
           #check that it is k
-          if np.array([n for n in thissn.filters.itervalues()]).sum() == 0:
+          if np.array([n for n in thissn.filters.values()]).sum() == 0:
                print ("bad sn")
 
                
@@ -161,40 +162,62 @@ if __name__ == '__main__':
                ax1.errorbar(x, y, yerr=yerr, fmt='k.')
                ax2.errorbar(np.log(x + 30), y, yerr=yerr, fmt='k.')
                
-               templatePkl = "outputs/UberTemplate_%s.pkl"%(b + 'p' if b in ['u', 'r', 'i']
+               templatePkl = "ubertemplates/UberTemplate_%s.pkl"%(b + 'p' if b in ['u', 'r', 'i']
                                                     else b)
-               tmpl = pkl.load(open(templatePkl, "rb"))
+               # tmpl = pkl.load(open(templatePkl, "rb"))
+
+               # Somayeh changed: The ubertemplates are being read this way:
+               with open(templatePkl, 'rb') as f:
+                u = pkl._Unpickler(f)
+                u.encoding = 'latin1'
+                tmpl = u.load()
+
                tmpl['mu'] = -tmpl['mu']
                print ("Template for the current band", templatePkl)
 
-               t = np.linspace(x.min(), x.max(), 100)
+               # We need to make sure that the new x is either defined within the old x boundaries 
+               # or within [-20,100] if the min and max of the old x go beyond -20 and 100:
+               
 
-               tmpl['musmooth'] = -tmpl['spl'](tmpl['phs'])
-               meansmooth = lambda x : -tmpl['spl'](x) + tmpl['spl'](0)  
+               if x.min()<-20:
+                tmin = -20
+               else:
+                tmin = x.min()
+
+               if x.max()>100:
+                tmax = 100
+               else: 
+                tmax = x.max()
+
+               t = np.linspace(tmin, tmax, 100)
+
+               ####################################
+               
+               tmpl['musmooth'] = -tmpl['spl_med'](tmpl['phs'])
+               meansmooth = lambda x : -tmpl['spl_med'](x) + tmpl['spl_med'](0)  
                
                ax00.errorbar(x, y, yerr=yerr, label="data")
                ax00.plot([-25,95], [0,0], 'k-', alpha=0.5, lw=2)
                ax00.plot(x, y - meansmooth(x), label="residuals")
                ax00.plot(x, meansmooth(x), 'ko')
-               ax00.plot(t, meansmooth(t), label="mean")
-               ax00.legend(fontsize=20)
+               ax00.plot(t, meansmooth(t), label="median")
+               ax00.legend(fontsize=15)
                ax00.set_ylim(-3,2)
                ax00.set_xlim(-30,100)
                ax00.set_title("residuals")
                ax00.set_ylabel("normalized mag")
                ax00.set_xlabel("time (days since peak)")
                
-               # Set up the Gaussian process.
-               
-               # ## Optimizing the hyper parameters
+               # Set up the Gaussian process with the optimized hyperparameters:
                
                kernel = kernels.Product(kernels.ConstantKernel(-1.15),
                                         kernels.ExpSquaredKernel(-2.3))
                
                gp = george.GP(kernel)
-               gp.kernel[:] = (-1.10, -1.73)#(-1.15, -2.3) 
+               gp.kernel[0] = -1.10#(-1.15, -2.3) 
+               gp.kernel[1] = -1.73
                
-               p0 = gp.kernel.vector
+               p0 = gp.kernel.parameter_vector
                done = False
                try:
                     gp.compute(np.log(x + 30), yerr)
@@ -207,7 +230,7 @@ if __name__ == '__main__':
                mu, cov = gp.predict(y - meansmooth(x), np.log(t+30))
                std = np.sqrt(np.diag(cov))
                
-               p0 = gp.kernel.vector
+               p0 = gp.kernel.parameter_vector
                
                ax01.set_title("pars: %.2f %.2f"%(p0[0], p0[1]))
                
@@ -219,16 +242,19 @@ if __name__ == '__main__':
                # # Subracting the mean and fitting GP to residuals only
                
                #spl = InterpolatedUnivariateSpline(templ.phs, ysmooth)
-               pl.savefig("outputs/GPfit%s_%s_medians.png"%(sn,b))
+               # pl.savefig("outputs/GPfit%s_%s_medians.png"%(sn,b))
                #continue
+
+               # Optimizing the hyper parameters:
                if FITGP:
                     try:
-                         results = op.minimize(nll, p0,
-                                               args=(y - meansmooth(x), 
-                                                     x, np.log(t+30), gp, yerr))
-                         #    # Update the kernel and print the final log-likelihood.
-                         gp.kernel[:] = results.x
+                      results = op.minimize(nll, p0, jac = grad_nll,
+                                            args=(y - meansmooth(x), 
+                                            np.log(t+30), gp))
+                   #    # Update the kernel and print the final log-likelihood.
+                      gp.kernel.parameter_vector = results.x
                     except :#RuntimeError:
+                         # print('got error')
                          #pl.savefig("GPfit%s_%s.png"%(sn,b))
                          continue
                     print ("hyper parameters: ", gp.kernel)
@@ -238,7 +264,7 @@ if __name__ == '__main__':
                mu, cov = gp.predict(y - meansmooth(x), np.log(t+30))
                std = np.sqrt(np.diag(cov))
                
-               p1 = gp.kernel.vector
+               p1 = gp.kernel.parameter_vector
                
                if FITGP:
                     ax1.set_xlabel("time (days since peak)")               
@@ -270,7 +296,7 @@ if __name__ == '__main__':
                     xl = pl.xlabel("log time (starting 30 days before peak)")
                     pl.savefig("outputs/GPfit%s_%s.png"%(sn,b))
                else:
-                    pkl.dump((y, gp, tmpl['spl']), open("outputs/GPfit%s_%s.pkl"%(sn,b), "wb"))
+                    pkl.dump((y, gp, tmpl['spl_med']), open("outputs/GPfit%s_%s.pkl"%(sn,b), "wb"))
                     
 
 
