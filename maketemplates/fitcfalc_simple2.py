@@ -2,10 +2,9 @@
 import os, inspect, sys, glob, optparse, time
 import numpy as np
 import scipy as sp
-import numpy as np
 import pylab as pl
 from scipy import optimize
-from scipy.interpolate import interp1d, spline
+from scipy.interpolate import interp1d, splprep, splev
 from scipy import stats as spstats 
 from mpmath import polyroots
 import pickle as pkl
@@ -22,7 +21,7 @@ try:
      os.environ['SESNCFAlib']
 
 except KeyError:
-     print "must set environmental variable SESNPATH and SESNCfAlib"
+     print ("must set environmental variable SESNPATH and SESNCfAlib")
      sys.exit()
 
 cmd_folder = os.getenv("SESNCFAlib")
@@ -34,7 +33,7 @@ if cmd_folder not in sys.path:
 
 from snclasses import *
 from templutils import *
-from leastsqbound import leastsqbound
+# from leastsqbound import leastsqbound
 
 
 
@@ -73,7 +72,7 @@ if __name__=='__main__':
 
 
     options, args = parser.parse_args()
-    print options, args
+    print (options, args)
 
 
     if len(args)>1:
@@ -109,18 +108,18 @@ if __name__=='__main__':
               options.active = False
 
          if not options.mode == 'simple':
-              print "modes available are 'simple' or 'iterative' for the construction of the template"
+              print ("modes available are 'simple' or 'iterative' for the construction of the template")
               sys.exit()
     
     if options.active:
-         print "interactive plotting"
+         print ("interactive plotting")
          pl.ion()
     if options.inst == 'all':
         ninsts = len(su.insts)
 
     if not os.path.isfile('lcvlog.dat'):
         logoutput=open("lcvlog.dat", 'w')
-        print >> logoutput, "##lcv type                           band       inst    ndata rchisq deg mad  flagmissmax  flagmiss15 dm15 mjmx dm15lin"
+        # print (>> logoutput, "##lcv type                           band       inst    ndata rchisq deg mad  flagmissmax  flagmiss15 dm15 mjmx dm15lin")
     else:
         logoutput=open("lcvlog.dat", 'a')
 
@@ -172,17 +171,17 @@ if __name__=='__main__':
                     
                     continue
                else:
-                    print "\n\n\n FOUND A ", thissn.sntype, ":", thissn.snnameshort, thissn.Vmax
+                    print ("\n\n\n FOUND A ", thissn.sntype, ":", thissn.snnameshort, thissn.Vmax)
                     #raw_input()
           
           try:
-               print "Vmax:", float(thissn.Vmax) 
+               print ("Vmax:", float(thissn.Vmax) )
           except:
-               print "no date of V max"
+               print ("no date of V max")
                #raw_input()
                continue
           if float(thissn.Vmax) ==0:
-               print "no date of V max"
+               print ("no date of V max")
                #raw_input()
                #continue
           try:
@@ -195,29 +194,29 @@ if __name__=='__main__':
           try:
                distpc=float(thissn.metadata['distance Mpc'])*1e6
           except:
-               print "failed on distance:", snname#, thissn.metadata['distance Mpc']
+               print ("failed on distance:", snname)#, thissn.metadata['distance Mpc']
                #continue
                #raw_input()
                
           #dm= 5.0*(np.log10(distpc)-1)
           thissn.setphot()
           print ("here")
-          print b, thissn.filters[b]
+          print (b, thissn.filters[b])
           #raw_input()
           thissn.getphot(ebmv=thisebmv)
 
           #print thissn.photometry
           thissn.setphase()#verbose=True)
           try:
-               print "herehere", b, thissn.snnameshort,
-               print thissn.photometry[b]['phase'][0],
-               print thissn.photometry[b]['mjd'][0], thissn.Vmax
+               print ("herehere", b, thissn.snnameshort)
+               print (thissn.photometry[b]['phase'][0])
+               print (thissn.photometry[b]['mjd'][0], thissn.Vmax)
           except:
-               print "FAILED"
+               print ("FAILED")
                #raw_input()
 
                continue
-          print thissn.photometry[b]['phase']
+          print (thissn.photometry[b]['phase'])
           #print thissn.photometry
           #raw_input()
           thissn.getcolors(BmI=False)
@@ -226,7 +225,7 @@ if __name__=='__main__':
           myfig = myopenfig(0, (23, 15))
           templatefigs=[]
           
-          print "##################working on SN ", f, 
+          print ("##################working on SN ", f,)
         
           snlog=open(thissn.name+'.log', 'w')
           #look for sn in big info file
@@ -235,9 +234,9 @@ if __name__=='__main__':
           minyall, maxyall=17, 17
           lph= len(thissn.photometry[b]['mag']) 
           if lph>0:
-               print "maxphot:", min(thissn.photometry[b]['mag']), thissn.sntype
+               print ("maxphot:", min(thissn.photometry[b]['mag']), thissn.sntype)
           else:
-               print "no photometry in", b, "band"
+               print ("no photometry in", b, "band")
                continue
 
           #thissn.photometry[b]['mag']-=dm
@@ -268,10 +267,10 @@ if __name__=='__main__':
          pkl.dump(meanlcall, open("%s_%s_lcv4template_gp.pkl"%(options.sntype,
                                                                b), 'wb'))
      meanlc=np.array(meanlc)
-     print ""
-     print meanlc[:][:]
-     print ""
-     print meanlc.shape, meanlccomponent
+     print ("")
+     print (meanlc[:][:])
+     print ("")
+     print (meanlc.shape, meanlccomponent)
      
      try:
           print (meanlc.T[0].shape)
@@ -296,7 +295,7 @@ if __name__=='__main__':
          fig4=pl.figure(4)
          fig4.clf()
          ax4=fig4.add_subplot(111)
-         print i, meanlccomponent[i], min(lc[0]), max(lc[0])
+         print (i, meanlccomponent[i], min(lc[0]), max(lc[0]))
 
          ax1.errorbar(lc[0], lc[1], yerr=lc[2], label=meanlccomponent[i])
          ax4.errorbar(lc[0], lc[1], yerr=lc[2], fmt = '.', label=meanlccomponent[i])
@@ -326,7 +325,7 @@ if __name__=='__main__':
          #print "ff", ff
          #print "ff-err", ff-3*ff_err
          #print "ff+err", ff+3*ff_err
-         print "best-fit theta =", gp.theta_[0, 0]
+         print ("best-fit theta =", gp.theta_[0, 0])
          #pl.plot(tsmoothx, ff, '-', color='black')
          
          ff=np.ma.array(ff, mask = np.array([tsmoothx<lc[0].min()])+np.array([tsmoothx>lc[0].max()]))
@@ -363,13 +362,13 @@ if __name__=='__main__':
      lcaverage=np.ma.average(fftall, axis=0, weights=fftweightsall)
      from smooth import *
      #lcerrN=1/np.sqrt(np.sum(fftweightsall, axis=0))#*len(meanlc)/np.sum(~fftall.mask, axis=0)
-     print ff_err
+     print (ff_err)
      V1 = np.sum(1.0/ff_err, axis=0)
      V2 = np.sum(fftweightsall, axis=0)
      lcerrN = np.sum(fftweightsall*(fftall-lcaverage)**2, axis=0) / (V1 - V2/V1)#/len(fftweightsall)
      #1/np.sqrt(np.sum(fftweightsall, axis=0))#*len(meanlc)/np.sum(~fftall.mask, axis=0)
      lcerr = np.std(fftall, axis=0)#1.0/np.sqrt(np.sum(fftweightsall, axis=0))
-     print "here", lcerrN, lcerr, 
+     print ("here", lcerrN, lcerr,)
      #print fftweightsall
      #print len(meanlc), np.sum(fftweightsall), fftweightsall, np.sum(~fftall.mask, axis=0)
 #0.5*np.sqrt(np.sum((fftweightsall*fftall)**2, axis=0))/np.sqrt(np.product(fftall, axis=0))
@@ -392,7 +391,7 @@ if __name__=='__main__':
      #for i, x in range(tsmoothx):
      ax1.legend(fontsize=8, ncol=2)
      for i in range(len(tsmoothx)):
-          print tsmoothx[i], lcaverage_smooth[i]-lcaverage_smooth[tsmoothx==0][0],lcerr[i]
+          print (tsmoothx[i], lcaverage_smooth[i]-lcaverage_smooth[tsmoothx==0][0],lcerr[i])
 
      fig1.savefig("%s_%s_templatelcv_gp.png"%(options.sntype, b), dpi=150)
      

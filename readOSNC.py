@@ -39,7 +39,7 @@ except (TypeError, IOError):
 
 Nmin = 6 #minimum number of datapoints to accept a lightcurve
 
-def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False):
+def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False, ref_remove=[]):
     # If you have already selected a set of SNe and you only need to download their 
     #lightcurves and check the criteria for the lightcurve, you should set selection_criteria = False
 
@@ -92,7 +92,7 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
 
     snarray = np.zeros(N, dtype=dtypes)
     for i,dp in enumerate(js['photometry']):
-        #print (dp)
+        # print (dp)
         #print ref['time']
         for j in range(len(snarray[i])):
             snarray[i][j] = np.nan 
@@ -107,7 +107,8 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
             # skip contaminated D11 data
             # print (sn)
             # print("now", sn.replace("SN20", "") in removed11)
-            if dp['source'] == D11ref and sn.replace("SN20", "") in removed11:
+            print(dp['source'])
+            if dp['source'] == D11ref or dp['source'] in ref_remove:# and sn.replace("SN20", "") in removed11:
                  continue
             # skip upper limit
             if  'upperlimit' in dp.keys():
@@ -136,9 +137,11 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
             snarray[i][band.replace("'","")] = dp['magnitude']
             #set missing uncertainty to 1% ... should probe be more!
             if 'e_magnitude' in dp:
+                 # dp['e_magnitude'][dp['e_magnitude']>0.3] 
                  snarray[i]['d'+band.replace("'","")] = dp['e_magnitude']
             else:
                  snarray[i]['d'+band.replace("'","")] = 0.01
+                 print('LLL: dmag was set to 0.01')
             if verbose:
                  print (snarray)
 
@@ -152,6 +155,7 @@ def doit(sn=None, url=None, vmax=None, selection_criteria = True, verbose=False)
     if verbose:
          thissn.printsn(photometry=True)
     thissn.plotsn(photometry=False, verbose=verbose)
+    print(thissn.su.bands)
     thissn.formatlitsn(snarray)
 
 
@@ -161,7 +165,12 @@ if __name__ == '__main__':
           print ("number of arguments", len(sys.argv))
           if len(sys.argv)>2 :
                #second argument is the max V magnitude for renormalization
-               doit(sn=sn, vmax=np.float(sys.argv[2]))
+               for arg in sys.argv[2:]:
+                if arg.startswith('vmax='):
+                    doit(sn=sn, vmax=np.float(arg.split('=')[1]))
+                else:
+                    ref_alias = arg.split('-')
+                    doit(sn=sn, ref_remove=ref_alias)
           else:
                print ("running as doit(sn=%s, vmax=None)"%sn)
                doit(sn=sn, vmax=None, verbose=False)
