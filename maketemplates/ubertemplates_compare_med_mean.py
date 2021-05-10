@@ -786,7 +786,7 @@ def wSmoothAverage (data, sigma, err=True):
                        
     ysmooth = ut['mu'][~np.isnan(ut['mu'])]
     ysmooth_med = ut['med_smoothed'][~np.isnan(ut['med_smoothed'])]
-    ut['epochs_med'] = ut['phs'][~np.isnan(ut['med_smoothed'])]
+    ut['epochs_med'] = ut['phs'][:len(ut['med_smoothed'])]
     '''
     ysmooth = np.array([
         np.average(ut['mu'],
@@ -847,7 +847,7 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
         #med[i] = np.median(data['y'][indx])
 
         
-        pc25[i], med[i], pc75[i] = np.percentile(data['y'][indx], [25, 50, 75])
+        pc25[i], med[i], pc75[i] = np.nanpercentile(data['y'][indx], [25, 50, 75])
 
         # if hour < -20:
             # print ('phase: ' ,hour, ', median: ', med[i])
@@ -1005,7 +1005,17 @@ def doall(b = su.bands, weights_plot = False, weights_heatmap = False):
             dms[b] = dm
             
             # print(phs[0:500],med[0:500])
-            med_ = savitzky_golay(med, 171, 3)
+
+            # Edited by Somayeh 5/10/21: In g band, the savgol cuts the template to shorter than 100d. 
+            # I am adding the cut section back to the smoothed array.
+
+            # med_ = savitzky_golay(med, 141, 3)
+
+            med_ = np.asarray(savitzky_golay(med, 141, 3)[~np.isnan(savitzky_golay(med, 141, 3))])
+            ind_ = len(med_[~np.isnan(med_)])-1
+            med_remaining = np.asarray(savitzky_golay(med[~np.isnan(med)][ind_:], 5,3)[~np.isnan(savitzky_golay(med[~np.isnan(med)][ind_:], 5,3))])
+
+            med_ = np.concatenate([med_, med_remaining])
 
             wmu[std==0] = np.nan
                 
@@ -1017,7 +1027,7 @@ def doall(b = su.bands, weights_plot = False, weights_heatmap = False):
             # Panel 3: Plotting the median and average template
             # The peak of the average templates is mannually set to zero to align the templates vertically. 
 
-            axs[0].plot(phs, med_, 'r-', lw=2, label = 'Smoothed rolling median template')
+            axs[0].plot(phs[:len(med_)], med_, 'r-', lw=2, label = 'Smoothed rolling median template')
             axs[0].fill_between(phs[std>0],
                                pc25[std>0],
                                pc75[std>0],
@@ -1029,7 +1039,7 @@ def doall(b = su.bands, weights_plot = False, weights_heatmap = False):
                                color = 'k', alpha=0.5)
             
 
-            axs[2].plot(phs, med_, 'r-', lw=2, label = 'Smoothed rolling median template')
+            axs[2].plot(phs[:len(med_)], med_, 'r-', lw=2, label = 'Smoothed rolling median template')
             axs[2].plot(phs[std>0], wmu[std>0], 'k-', lw=2,  label = 'Rolling weighted average template')
             axs[2].fill_between(phs[std>0],
                                pc25[std>0],
