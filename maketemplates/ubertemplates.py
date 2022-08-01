@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import os
 import pickle as pkl
 import sys
@@ -10,29 +7,22 @@ import numpy as np
 import pandas as pd
 from bokeh.layouts import column
 from bokeh.models import BoxZoomTool, HoverTool, ResetTool, TapTool
-from bokeh.models import ColumnDataSource, CustomJS
+from bokeh.models import ColumnDataSource
+from bokeh.models.callbacks import CustomJS
 from bokeh.plotting import Figure as bokehfigure
 from bokeh.plotting import figure as bokehfigure
 from bokeh.plotting import save as bokehsave
 from scipy.interpolate import InterpolatedUnivariateSpline
-
-
-print("bokeh version", bokeh.__version__)
-# , HBox, VBoxForm, BoxSelectTool, TapTool
-# from bokeh.models.widgets import Select
-# Slider, Select, TextInput
 from bokeh.plotting import output_file
 import matplotlib.gridspec as gridspec
-
+import matplotlib.pyplot as plt
 try:
     os.environ['SESNPATH']
     os.environ['SESNCFAlib']
-    os.environ['UTILPATH']
 
 except KeyError:
     print("must set environmental variable SESNPATH and SESNCfAlib")
     sys.exit()
-
 
 cmd_folder = os.getenv("SESNCFAlib")
 if cmd_folder not in sys.path:
@@ -40,20 +30,13 @@ if cmd_folder not in sys.path:
 cmd_folder = os.getenv("SESNCFAlib") + "/templates"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
-
-from ubertemplates import *
-
-cmd_folder = os.getenv("UTILPATH")
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-
-
+from savgol import savitzky_golay
 from snclasses import *
 from templutils import *
 from makePhottable import *
 from colors import rgb_to_hex
 
-MINEP, MAXEP = -100, 365.25 * 2
+MINEP, MAXEP = -30, 100
 archetypicalSNe = ['94I', '93J', '08D', '05bf', '04aw', '10bm', '10vgv']
 
 colorTypes = {'IIb':'FireBrick',
@@ -64,10 +47,8 @@ colorTypes = {'IIb':'FireBrick',
 
 #prepping SN data from scratch
 #(dont do that if you are testing or tuning plots)
-PREP = True 
-#PREP = False
+PREP = True
 BOKEHIT = True
-#BOKEHIT = False
 font = {'family' : 'normal',
         'size'   : 20}
 
@@ -77,9 +58,17 @@ su = setupvars()
 pl.rc('font', **font)
 
 def setcolors(inputSNe):
-    cm = pl.get_cmap('nipy_spectral')#viridis')
+    """Function selecting colors for individual supernovae
+    Inputs:
+    :param  list inputSNe: List of supernovae names
+
+    Returns:
+    :param list sncolors: List of colors selected from a particular color map
+    """
+
+    cm = pl.get_cmap('nipy_spectral')
     Nsne = len(inputSNe)
-    print (Nsne)
+    print ('Number of input supernovae is ',Nsne)
     sncolors = [''] * Nsne
     for i in range(Nsne):
         sncolors[i] = (cm(1.*i/Nsne))
@@ -91,30 +80,53 @@ def setcolors(inputSNe):
     return (sncolors)
 
 def select2ObsPerDay(data):
+    """Function selecting 2 observations per day for each supernovae
+    Inputs:
+    :param  Bokeh data structure data: It is a collection of arrays of data (columns) that can be referred to by names.
+            It stores the supernovae names and photometry.
 
-    dataTimeByDay =  data['x'].astype(int)
-    #print data, dataTimeByDay
+    Returns:
+    :param Bokeh data structure data: The input plus an array of masks that allows to select only 2 data points per day
+    """
+
+    dataTimeByDay =  (data['x']).astype(int)
     minx = int(data['x'].min())
-    #print np.unique(dataTimeByDay, return_counts=True)
     for sid in np.unique(data['id']):
         thissn = np.where((data['id'] == sid))[0]        
-        #print sid, np.where((data['id'] == sid))[0]
         bc = np.bincount(dataTimeByDay[thissn] - minx) > 2
         for i in np.arange(len(bc))[bc]:
-            #print i + minx, bc[i]
             theseindx = np.where((data['id'] == sid) *
                             (dataTimeByDay == i + minx))[0]
-            choices = np.random.choice(theseindx, len(theseindx) - 2)
-            #print theseindx[np.argsort(data['yerr'][theseindx])],
-            #print data['yerr'][theseindx][np.argsort(data['yerr'][theseindx])]            
-                
-            #print data['mask']#[thissn]
-            #data['mask'][choices] = True
-            #print theseindx[np.argsort(data['yerr'][theseindx])][2:] #= True
             data['mask'][theseindx[np.argsort(data['yerr'][theseindx])][2:]] = True
     return data
-            
-    sys.exit()
+
+def select1ObsPerBin(data, phsmax = 100, window = 5):
+    """Function selecting 2 observations per day for each supernovae
+    Inputs:
+    :param  Bokeh data structure data: It is a collection of arrays of data (columns) that can be referred to by names.
+            It stores the supernovae names and photometry.
+
+    Returns:
+    :param Bokeh data structure data: The input plus an array of masks that allows to select only 2 data points per day
+    """
+    phs = np.arange(-20 - window, phsmax + window,
+                    1.0 / 24)
+
+    for sid in np.unique(data['id']):
+        thissn = np.where((data['id'] == sid))[0]
+
+        for i, hour in enumerate(phs):
+            # I need at least 1 datapoint within 3 hours of the target hour (to take median)
+            indx = (data['x'][thissn] >= hour) * (data['x'][thissn] < hour + window)
+
+            if sum(indx) == 0:
+                continue
+
+            tmp_t = data['x'][thissn][indx]
+            indx_center = np.argmin(np.argmin(tmp_t - ((hour + window) / 2.)))
+
+            data['mask'][indx_center] = True
+    return data
 
     
 def double_exponential_smoothing(series, alpha, beta):
@@ -133,11 +145,17 @@ def double_exponential_smoothing(series, alpha, beta):
 
 
 def plotme(data, b, sncolors, axtype=None, verbose=False):
-    #pl.ion()
-    '''plotme: 
-       makes matplotlib plot for band b with all datapoints from all SNe
+    """Function that plots for band b with all datapoints from all SNe and
        prepares dataframes for Bokeh plot
-    '''
+        Inputs:
+        :param  Bokeh data structure data: Stores arrays of supernovae names, time, magnitudes, and uncertainties
+        :param b: The bandpass
+        :param sncolors: List of colors for each individual supernovae
+
+        Returns:
+        :param Bokeh data structure data: The input plus an array of masks that allows to select only 2 data points per day
+        """
+
     pl.figure(figsize=(20, 15))
     gs = gridspec.GridSpec(3, 2)
     gs.update(wspace=0.05)
@@ -156,6 +174,9 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
     sncount = 0
     snN = len(data['phase'])
     badcount  = 0
+
+    allSNe_mod = {'phase':[], 'mag':[]}
+
     for i, tmp in enumerate(data['phase']):
 
         
@@ -168,10 +189,19 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
 
         corephases = (tmp > -5) * (tmp < 5)
 
+        ## Added by Somayeh
+        if (b == 'U' and '54A' in data['name'][i])\
+        or (b == 'V' and '54A' in data['name'][i])\
+        or (b == 'U' and '03dh' in data['name'][i]):
+#             flag = True
+            continue
+
         if corephases.sum()<1:
             print  (data['name'][i], b,
                     "has no datapoints between near 0. Moving on")
             flag = True
+        # else: 
+        #     print(data['name'][i], b, 'is good!')
         #print(data['name'][i])
         if data['name'][i] in ['03lw', '04dk', '04gt', '06fo',
                                '07D', '13cq']:
@@ -180,21 +210,24 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
             badcount += 1
         # set offset to minimum mag first
         # magoffset is the index of the minimum (brightest) dp
+
         if ('13dx' == data['name'][i] and b == 'i') :
             magoffset = np.where(data['mag'][i][tmp>-2] ==
                                  min(data['mag'][i][tmp>-2]))[0]            
         else:
             magoffset = np.where(data['mag'][i] ==
                              min(data['mag'][i]))[0]
-        
-        if '16gkg' in data['name'][i]:
-            magoffset = [0]
+        ## Commented by Somayeh
+        # if '16gkg' in data['name'][i]:
+        #     magoffset = [0]
+
         #if more than one peak have min value (nearly impossible w floats) choose first
         if len(magoffset) > 1:
             if verbose: print (np.abs(tmp[magoffset]).min())
             tmpmo =  magoffset[np.abs(tmp[magoffset]) == \
                                    np.abs(tmp[magoffset]).min()][0]
-            magoffset = tmpmo
+            magoffset = np.asarray([tmpmo])
+            # print (tmpmo)
             
         #if the maximum is more than 3 days off from expected for this band
         #be suspicious and reset it if you can !
@@ -207,13 +240,24 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
                and not (b == 'H' and '09iz' in data['name'][i]):
                 magoffset = np.where(np.abs(tmp) == np.min(np.abs(tmp)))[0]
             #print magoffset, data['mag'][i][magoffset],  tmp[magoffset]
+
         if data['name'][i] == '03dh' :
             magoffset = np.where(np.abs(tmp) == np.min(np.abs(tmp)))[0]
-            
-        if not isinstance(magoffset, int) and len(magoffset) > 1:
-            tmpmo =  magoffset[(data['mag'][i][magoffset] == \
-                                   min(data['mag'][i][magoffset]))][0]
-            magoffset = tmpmo
+
+        # print(magoffset,type(magoffset))
+        # print (isinstance(magoffset, int))
+        #
+        # if type(magoffset) == 'numpy.int64':
+        #     print('yes')
+
+
+        if not isinstance(magoffset, int):
+            if len(magoffset) > 1:
+                tmpmo =  magoffset[(data['mag'][i][magoffset] ==
+                                       min(data['mag'][i][magoffset]))][0]
+                magoffset = np.asarray([tmpmo])
+
+
         
         sncount += 1
         #set up key for hover tool: same name and type for all points
@@ -231,8 +275,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
         sourcedata['yerr'] = sourcedata['yerr'] + list(data['dmag'][i][indx])
         sourcedata['colors'] = sourcedata['colors'] +\
                                [rgb_to_hex(255. * sncolors[i])] * len(indx)
-        sourcedata['typegroup'] = sourcedata['colors'] +\
-                               [rgb_to_hex(255. * sncolors[i])] * len(indx)        
+        # sourcedata['typegroup'] = sourcedata['colors'] +\
+        #                        [rgb_to_hex(255. * sncolors[i])] * len(indx)
         #[hexcolors[::3][i]] * len(indx)                               
                                #[colormaps[sntp](i*1.0/snN)]  * len(indx)
         maskhere = [False] * len(indx)
@@ -251,11 +295,15 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
         #print sourcedata['colors']
         sourcedata['mask'] = sourcedata['mask'] + maskhere
         if not flag:
-            sourcedata['x'] = sourcedata['x'] + list(tmp[indx]
-                                                 - data['phase'][i][magoffset]) 
+            ## Commented by Somayeh
+            sourcedata['x'] = sourcedata['x'] + list(tmp[indx])
+                                                 # - data['phase'][i][magoffset])
+            allSNe_mod['phase'].append(list(tmp[indx]))
             
             sourcedata['y'] = sourcedata['y'] + list(-(data['mag'][i][indx]
                                                        - data['mag'][i][magoffset]))
+            allSNe_mod['mag'].append(list(-(data['mag'][i][indx] - data['mag'][i][magoffset])))
+
             ax0.errorbar(tmp[indx],
                          data['mag'][i][indx] - data['mag'][i][magoffset],
                          yerr=data['dmag'][i][indx],
@@ -273,7 +321,8 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
                                 data['mag'][i][magoffset],
                                 yerr=data['dmag'][i][indx][~np.array(maskhere)],
                                 fmt='.', color=colorTypes[sntp],
-                                alpha=0.5)            
+                                alpha=0.5)
+                axtype.set_ylim(axtype.get_ylim()[1], axtype.get_ylim()[0])
         else:
             sourcedata['x'] = sourcedata['x'] + list(tmp[indx])
             
@@ -329,12 +378,16 @@ def plotme(data, b, sncolors, axtype=None, verbose=False):
     sncolordic = {}
     for i,k in enumerate(sourcedata['id']):
         sncolordic[k] = sourcedata['colors'][i]
+    if not os.path.exists('outputs'):
+        os.mkdir('outputs')
+
     pkl.dump(sncolordic, open('outputs/colorSNe.pkl', 'wb'))
 
   
   
     
-    return sourcedata, (ax0, ax2, gs)
+    return allSNe_mod, sourcedata, (ax0, ax2, gs)
+
 
 def update_xyaxis(f, rg,  xy='y'):
     if xy == 'y':
@@ -345,7 +398,7 @@ def update_xyaxis(f, rg,  xy='y'):
         fax.start = rg[0] 
         fax.end   = rg[1]
 
-def bkerrorbar(fig, fig2, s, s2, mu, std, phases):
+def bkerrorbar(fig, fig2, s, s2, med, pc25, pc75, phases):
     '''errorbar:
        makes errorbars plot in Bokeh figure
     '''
@@ -392,11 +445,14 @@ def bkerrorbar(fig, fig2, s, s2, mu, std, phases):
                 fill_alpha='alphas', alpha='alphas')
     fig2.multi_line('yerrx', 'yerry', source = s2, line_alpha='alphas')
     #fig2.line(x=phases, y=-mu, color='black')
-    std[np.isnan(std)] = 0
-    mu[np.isnan(mu)] = 0
+    # pc25[np.isnan(pc25)] = 0
+    # pc75[np.isnan(pc25)] = 0
+    # med[np.isnan(med)] = 0
     
-    s2.add((- mu).tolist(), 'mu')
-    s2.add(phases.tolist(), 'phase')
+    s2.add((-1*med[~np.isnan(med)]).tolist(), 'med')
+    s2.add(phases[~np.isnan(med)].tolist(), 'phase')
+    s2.add((-1 * med[~np.isnan(med)][phases[~np.isnan(med)] > 20]).tolist(), 'med2')
+    s2.add(phases[~np.isnan(med)][phases[~np.isnan(med)] > 20].tolist(), 'phase2')
     #s.add(np.concatenate([phases, phases[::-1]]).tolist(), 'px') 
     #s.add(np.concatenate([-mu + std, -mu[::-1] - std[::-1]]).tolist(), 'py')    
     #fig2.multi_line('yerrx', 'yerry', source = s2, line_alpha='
@@ -404,8 +460,13 @@ def bkerrorbar(fig, fig2, s, s2, mu, std, phases):
     #s2.data['py'] = [np.concatenate([-mu + std, -mu[::-1] - std[::-1]])]
     #s2.data['scolors'] = s.data['colors']
 
-    px = [np.concatenate([phases, phases[::-1]])]
-    py = [np.concatenate([-mu + std, -mu[::-1] - std[::-1]])]    
+    phases,pc25, pc75 = zip(*sorted(zip(phases,pc25, pc75),key=lambda x: x[0]))
+
+    phases,pc25, pc75 = np.asarray(phases),np.asarray(pc25), np.asarray(pc75)
+
+    px = [np.concatenate([phases[~np.isnan(pc25)], phases[~np.isnan(pc75)][::-1]])]
+    py = [np.concatenate([ -1*pc75[~np.isnan(pc75)], -1*pc25[~np.isnan(pc25)][::-1]])]
+    # py2 = [np.concatenate([- med, - pc25])]    
 
     '''
     for sn in archetypicalSNe:
@@ -423,19 +484,22 @@ def bkerrorbar(fig, fig2, s, s2, mu, std, phases):
         #            color="grey", alpha=0.2)
     '''
 
-    fig2.line(x='phase', y='mu', source=s2)    
+    fig2.line(x='phase', y='med', source=s2,color = 'black')
+    fig2.line(x='phase2', y='med2', source=s2, color='black')
     fig2.patches(xs=px, ys=py, 
                  color="grey", alpha=0.3)
+    # fig2.patches(xs=px, ys=py2, 
+    #              color="grey", alpha=0.3)
     
     update_xyaxis(fig, (miny - 0.5, maxy + 0.5))
-    update_xyaxis(fig, (-30., 150.), xy='x')
+    update_xyaxis(fig, (-30., 100.), xy='x')
     update_xyaxis(fig2, (miny - 0.5, maxy + 0.5))
-    update_xyaxis(fig2, (-50., 150.), xy='x')
+    update_xyaxis(fig2, (-30., 100.), xy='x')
 
 
-    miny = min(py[0]) if miny > min(py[0]) else miny
-    maxy = max(py[0]) if maxy < max(py[0]) else maxy
-    s.callback = CustomJS(args=dict(s2=s2), code="""
+    # miny = min(py[0]) if miny > min(py[0]) else miny
+    # maxy = max(py[0]) if maxy < max(py[0]) else maxy
+    callback = CustomJS(args=dict(s2=s2), code="""
         var inds = cb_obj.get('selected')['1d'].indices;
         console.log("inds", inds);
         console.log(cb_obj.get('selected')['1d'])
@@ -476,9 +540,9 @@ def bkerrorbar(fig, fig2, s, s2, mu, std, phases):
     #             color="grey", alpha=0.2)
 
 
-def bokehplot(source, wmu, std, phs, b):
+def bokehplot(source, med, pc25, pc75, phs, b):
            # making Bokeh plots
-        htmlout = "outputs/UberTemplate_%s.html"%\
+        htmlout = "ubertemplates/for the paper/UberTemplate_%s.html"%\
                   (b + 'p' if b in ['u', 'r', 'i'] else b)
         output_file(htmlout)
         print (htmlout)
@@ -516,7 +580,7 @@ def bokehplot(source, wmu, std, phs, b):
                          tools=TOOLS2)
 
         
-        bkerrorbar(p, p2, source, s2, wmu, std, phs)
+        bkerrorbar(p, p2, source, s2, med, pc25, pc75, phs)
 
         p.yaxis.axis_label = "relative magnitude"
         p2.xaxis.axis_label = "phase (days)"
@@ -525,7 +589,7 @@ def bokehplot(source, wmu, std, phs, b):
 
         bokehsave(layout)
 
-        print ("\n\n bokeh plot saved to " + "outputs/UberTemplate_%s.html"%\
+        print ("\n\n bokeh plot saved to " + "ubertemplates/for the paper/UberTemplate_%s.html"%\
                   (b + 'p' if b in ['u', 'r', 'i'] else b))
         #curdoc().add_root(layout)
         #bokehshow(layout)        
@@ -542,7 +606,7 @@ def preplcvs(inputSNe, workBands):
     
     if workBands == su.bands:
         # prepare stuff for latex tables to be passed to makePhottable
-        bands1 = ['U', 'u', 'B', 'V', 'R', 'r', 'I', 'i']
+        bands1 = ['U', 'u', 'B', 'V', 'R','g', 'r', 'I', 'i']
         bands2 = ['w2', 'm2', 'w1', 'H', 'J', 'K']
         
         tmp1 = {}
@@ -559,7 +623,9 @@ def preplcvs(inputSNe, workBands):
         tmp2["Any[min,max]"] = {}
 
     # iterate over all SNe in metadata file
+    # print (inputSNe)
     for f in inputSNe:
+        print(f)
         if f.startswith("#"): continue
         print ("\n\n####################################################\n\n\n", f)
     
@@ -571,6 +637,7 @@ def preplcvs(inputSNe, workBands):
 
         # read metadata for SN
         thissn.readinfofileall(verbose=False, earliest=False, loose=True)
+        thissn.setVmax()
 
         # setting date of maximum if not in metadata
         if np.isnan(thissn.Vmax) or thissn.Vmax == 0:
@@ -592,6 +659,7 @@ def preplcvs(inputSNe, workBands):
                     continue
 
         if thissn.Vmax is None or thissn.Vmax == 0 or np.isnan(thissn.Vmax):
+            print('Vmax not found: ',thissn.snnameshort)
             continue
         #print ("Vmax", thissn.snnameshort, thissn.Vmax)
         # load data
@@ -602,13 +670,13 @@ def preplcvs(inputSNe, workBands):
         thissn.setphot()
         thissn.getphot()
 
-        if np.array([n for n in thissn.filters.itervalues()]).sum() == 0:
+        if np.array([n for n in iter(thissn.filters.values())]).sum() == 0:
             continue
 
         #thissn.plotsn(photometry=True)
         thissn.setphase()
         print (" finished ")
-        thissn.printsn()
+        # thissn.printsn()
         
         if workBands == su.bands:
             # add SN photometry to dataframe for latex table
@@ -650,26 +718,42 @@ def preplcvs(inputSNe, workBands):
                    ( thissn.photometry[b]['phase'] < MAXEP)
 
             allSNe[b]['mag'].append(thissn.photometry[b]['mag'][indx])
+
+            # tstphot = thissn.photometry[b]['dmag'][indx]
+            # tstphot[tstphot>0.3] = 0.3
             allSNe[b]['dmag'].append(thissn.photometry[b]['dmag'][indx])
             #np.zeros(len(thissn.photometry[b]['dmag'])) + 0.2)
             #
             allSNe[b]['phase'].append(thissn.photometry[b]['phase'][indx])  
             allSNe[b]['name'].append(thissn.snnameshort)
-            allSNe[b]['type'].append(thissn.sntype)
+            allSNe[b]['type'].append(thissn.type)
 
         ## remove duplicate entries from  array
     for b in workBands:
         for i in range(len(allSNe[b]['mag'])):
             if len(allSNe[b]['phase'][i]) == 0:
                 continue
-            records_array = np.unique(np.array(zip(allSNe[b]['phase'][i],
+            records_array = np.unique(np.array(list(zip(allSNe[b]['phase'][i],
                                                    allSNe[b]['mag'][i],
                                                    allSNe[b]['dmag'][i]
-                                                   )), axis=0)
+                                                   ))), axis=0)
             
             allSNe[b]['phase'][i] = records_array[:,0]            
             allSNe[b]['mag'][i] = records_array[:,1]
             allSNe[b]['dmag'][i] = records_array[:,2]
+
+
+
+
+
+
+
+
+        # print('FindMe2', allSNe[b][allSNe[b]['type'] == np.unique(allSNe[b]['type'])[0]])
+
+        # for b_ in np.unique(allSNe[b]['type']):
+
+        #     pl.plot()
                 
 
 
@@ -681,7 +765,7 @@ def preplcvs(inputSNe, workBands):
             bands.append(b)
             bands.append(b + "[min,max]")
 
-#TODO: commented by Somayeh
+# TODO: commented by Somayeh
         '''tabletex = "../../papers/SESNexplpars/tables/AllPhotOptTable.tex"
         add2table(tmp1, bands, tabletex)
 
@@ -703,8 +787,8 @@ def wSmoothAverage (data, sigma, err=True):
     '''weighted average weighted by both gaussian kernel and errors
     '''
     ut = data.copy()
-    ut['epochs'] = ut['phs'][~np.isnan(ut['mu'])]
-    ut['med'] = ut['med'][~np.isnan(ut['mu'])]    
+    ut['epochs_mu'] = ut['phs'][~np.isnan(ut['mu'])]
+    # ut['med'] = ut['med'][~np.isnan(ut['mu'])]    
     ut['std'] = ut['std'][~np.isnan(ut['mu'])]
     ut['mu'] = ut['mu'][~np.isnan(ut['mu'])]
 
@@ -714,6 +798,11 @@ def wSmoothAverage (data, sigma, err=True):
         yerr = np.ones(len(ut['std']))
                        
     ysmooth = ut['mu'][~np.isnan(ut['mu'])]
+    ysmooth_med = ut['med_smoothed'][~np.isnan(ut['med_smoothed'])]
+    ut['epochs_med'] = ut['phs'][:len(ut['med_smoothed'])]
+    xx = ut['phs'][:len(ut['med_smoothed'])][~np.isnan(ut['med_smoothed'])]
+    
+
     '''
     ysmooth = np.array([
         np.average(ut['mu'],
@@ -723,13 +812,13 @@ def wSmoothAverage (data, sigma, err=True):
     '''
                        #phases where to calculate it
     window = 1.0/24
-    ut['phs'] =  np.arange(-20 - window, 100 + window,
-                           window)  + window * 0.5 # every hour in days
+    # ut['phs'] =  np.arange(-20 - window, 100 + window,
+    #                        window)  + window * 0.5 # every hour in days
     #print(ysmooth.shape, )
-    return ut, InterpolatedUnivariateSpline(ut['epochs'], ysmooth)
+    return ut, InterpolatedUnivariateSpline(ut['epochs_mu'], ysmooth), InterpolatedUnivariateSpline(xx, ysmooth_med)
 
     
-def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
+def wAverageByPhase (allSNe_mod, data, sigma, err=True, phsmax=100, window=5):
     dm = {}
     
     phs =  np.arange(-20 - window, phsmax + window,
@@ -738,16 +827,22 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
     N = len(phs)
     wmu = np.zeros(N) * np.nan
     med = np.zeros(N) * np.nan
+    med_2 = np.zeros(N) * np.nan
     std = np.zeros(N) * np.nan
     wstd = np.zeros(N) * np.nan
     wgstd = np.zeros(N) * np.nan        
     wgmu = np.zeros(N) * np.nan    
     pc25 = np.zeros(N) * np.nan
-    pc75 = np.zeros(N) * np.nan    
+    pc75 = np.zeros(N) * np.nan
+    pc25_2 = np.zeros(N) * np.nan
+    pc75_2 = np.zeros(N) * np.nan
+    err_ratio = np.zeros(N) * np.nan
+    weights_mean = np.zeros(N) * np.nan
+    weights_med = np.zeros(N) * np.nan    
     
     #sad c-style loop
     for i, hour in enumerate(phs):
-        # i need at least 1 datapoint within 3 hours of the target hour (to take median)
+        # I need at least 1 datapoint within 3 hours of the target hour (to take median)
         indx = (data['x'] >= hour) * (data['x'] < hour + window)
         #print (i, hour + window/2., indx.sum())
 
@@ -767,20 +862,57 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
 
         wstd[i] = np.average((data['y'][indx]-wmu[i])**2,  axis = 0,
                              weights=weights)
-        #median
-        #med[i] = np.median(data['y'][indx])
-        pc25[i], med[i], pc75[i] = np.percentile(data['y'][indx], [25, 50, 75])
         
+        pc25[i], med[i], pc75[i] = np.nanpercentile(data['y'][indx], [25, 50, 75])
+
+        batch_temp = []
+
+        for k, tmp in enumerate(allSNe_mod['phase']):
+            indx2 = (tmp >= hour) * (tmp < hour + window)
+            if sum(indx2) == 0:
+                continue
+            # try:
+            # cc = allSNe_mod['mag'][k][np.argmin(np.abs(np.asarray(tmp)[indx2] - (hour+window/2.)))]
+            # print('cc is', cc)
+            cc = np.nanmean(np.asarray(allSNe_mod['mag'][k])[indx2])
+            # except:
+            #     cc = np.nan
+            if not np.isnan(cc):
+                batch_temp.append(cc)
+
+        if len(batch_temp) != 0:
+            pc25_2[i], med_2[i], pc75_2[i] = np.nanpercentile(batch_temp, [25, 50, 75])
+        # except:
+        #     pass
+            # print(batch_temp)
+
+
+
+        # if hour < -20:
+            # print ('phase: ' ,hour, ', median: ', med[i])
+
+
+        indx_high = (data['y'][indx]<med[i])
+        indx_low = (data['y'][indx]>med[i])
+
+        err_ratio[i] = np.mean((data['yerr'][indx][indx_low])**2)/np.mean((data['yerr'][indx][indx_high])**2)
+        weights_mean[i] = np.mean(1./(data['yerr'][indx])**2)
+        weights_med[i] = np.median(1./(data['yerr'][indx])**2)
+
+    med_2 = -1*(med_2) #- np.nanmin(med_2))
+    pc25_2 = -1*(pc25_2) #- np.nanmin(pc25_2))
+    pc75_2 = -1*(pc75_2) #- np.nanmin(pc75_2))
 
     interpmed = np.poly1d(np.polyfit(phs[~np.isnan(med)],
                                      wmu[~np.isnan(med)],
                                      3))
     # below checks the polynnomial spline that is removed before smoothing to avoid regression to mean
     
-    #pl.figure()
-    #pl.plot(phs[~np.isnan(med)],wmu[~np.isnan(med)],'.')
-    #pl.plot(data['x'], interpmed(data['x']))
-    #pl.show()
+    # pl.figure()
+    # pl.plot(phs[~np.isnan(med)],wmu[~np.isnan(med)],'.')
+    # pl.plot(data['x'], interpmed(data['x']))
+    # plt.gca().invert_yaxis()
+    # pl.show()
     
     for i, hour in enumerate(phs):
 
@@ -789,12 +921,10 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
                        #np.exp(((data['x'] - hour - window * 0.5) /
         #                sigma)**2 / 2)
         weights = 1.0/((data['yerr'])**2) * gtemp
-        wgmu[i] = np.average(data['y'] - interpmed(data['x']),
-                            weights=weights) 
-        wgstd[i] = np.average((data['y'] - interpmed(data['x']))**2,  axis = 0,
-                             weights=weights)
+        wgmu[i] = np.average((data['y'] - interpmed(data['x'])), weights =weights)
+        wgstd[i] = np.average((data['y']- interpmed(data['x']))**2,  axis = 0, weights=weights)
 
-
+# interpmed(data['x']) -
     #add back polynomial to fit general trend
     wgmu = wgmu + interpmed(phs)
     
@@ -818,19 +948,20 @@ def wAverageByPhase (data, sigma, err=True, phsmax=100, window=5):
     #pl.plot(phs, wmu, 'r')
     #pl.errorbar(data['x'], data['y'], yerr=data['yerr'],
     #            color='k', fmt='.')
-    return phs, wgmu, wgstd, wmu, med, std, wstd, dm, pc25, pc75
+    return phs, wgmu, wgstd, wmu, med, med_2, std, wstd, dm, pc25, pc75, pc25_2, pc75_2, err_ratio, weights_med, weights_mean
 
     
 def doall(b = su.bands):
     # read in csv file with metadata
     inputSNe = pd.read_csv(os.getenv("SESNCFAlib") +
-                           "/SESNessentials.csv")['SNname'].values#[:5]
+                           "/SESNessentials.csv", encoding = "ISO-8859-1")['SNname'].values#[:5]
 
     if os.path.isfile('input/sncolors.pkl'):
         print ('reading sncolors')
         with open('input/sncolors.pkl', 'rb') as f:
             sncolors = pkl.load(f, encoding="latin")
-
+        # sncolors =  pkl.load(open('input/sncolors.pkl'))
+        
         if not len(sncolors) == len(inputSNe):
             print ("redoing SNcolors")
             #raw_input()
@@ -840,11 +971,12 @@ def doall(b = su.bands):
         sncolors = setcolors(inputSNe)            
     dms = {}
     workBands = b
+    templates = {}
 
     if PREP:
         allSNe = preplcvs(inputSNe, workBands)
     else:
-        allSNe = {}
+        # allSNe = {}
         allSNe = pkl.load(open('input/allSNe.pkl'))
 
     
@@ -855,24 +987,23 @@ def doall(b = su.bands):
         fig = pl.figure(figsize=(15, 10))
         axtype = fig.add_subplot(111)
 
+    
 # TODO: For some bands like 'J' there is no phase and magnitude in the allSNe.pkl file
 
         source = ColumnDataSource(data={})
-        source.data, ax = plotme(allSNe[b], b, sncolors, axtype=axtype)
+        allSNe_mod, source.data, ax = plotme(allSNe[b], b, sncolors, axtype=axtype)
 
         #print (source.data)
         for k in source.data.keys():
-            try:
-                if isinstance(source.data[k][0], np.float32):
-                    print (k, np.isnan(source.data[k]).sum())
-            except:
-                print ('There is no data available for band '+ str(b))
+            if isinstance(source.data[k][0], np.float32):
+                print (k, np.isnan(source.data[k]).sum())
         
         x = np.array(source.data['x']) #timeline
         if len(x)<2:
             continue
         #select max 2 obs per day
-        source.data = select2ObsPerDay(source.data)
+        # source.data = dict(select2ObsPerDay(source.data))
+        # source.data = dict(select1ObsPerBin(source.data))
         #selectOneEpochPerDay(source.data)
         #remove phases >100 days
         indx1 = (x<100) & (~np.array(source.data['mask']))
@@ -895,6 +1026,8 @@ def doall(b = su.bands):
         dataphases = {'x': x, 'y': y, 'yerr': yerr, 'phases': phases,
                   'allSNe': allSNe[b]}
 
+        if not os.path.exists('data'):
+            os.mkdir('data')
         pkl.dump(dataphases, open('data/alldata_%s.pkl' % b, 'wb'))
         
         print ("calculating stats and average ", b)
@@ -912,8 +1045,25 @@ def doall(b = su.bands):
             gsig = gsig * 2
 
         #set weithed averge, median etc
-        phs, wmu, wgstd, mu, med, std, wstd, dm, pc25, pc75 = wAverageByPhase(dataphases, gsig)
+        phs, wgmu, wgstd, wmu, med, med_2, std, wstd, dm, pc25, pc75, pc25_2, pc75_2, err_ratio, weights_med, weights_mean = wAverageByPhase(allSNe_mod, dataphases, gsig)
         dms[b] = dm
+
+        med_ = np.asarray(savitzky_golay(med, 141, 3)[~np.isnan(savitzky_golay(med, 141, 3))])
+        pc25_ = np.asarray(savitzky_golay(pc25, 141, 3)[~np.isnan(savitzky_golay(pc25, 141, 3))])
+        pc75_ = np.asarray(savitzky_golay(pc75, 141, 3)[~np.isnan(savitzky_golay(pc75, 141, 3))])
+
+        med__ = np.asarray(savitzky_golay(med_2, 141, 3)[~np.isnan(savitzky_golay(med_2, 141, 3))])
+        pc25__ = np.asarray(savitzky_golay(pc25_2, 141, 3)[~np.isnan(savitzky_golay(pc25_2, 141, 3))])
+        pc75__ = np.asarray(savitzky_golay(pc75_2, 141, 3)[~np.isnan(savitzky_golay(pc75_2, 141, 3))])
+
+        # ind_ = len(med_[~np.isnan(med_)])-1
+        # med_remaining = np.asarray(savitzky_golay(med[~np.isnan(med)][ind_:], 5,3)[~np.isnan(savitzky_golay(med[~np.isnan(med)][ind_:], 5,3))])
+
+        # px = [np.concatenatee([phs, phs[::-1]])]
+        # py = [np.concatenat([- pc75, - pc25[::-1]])]
+        # print(b)
+        # print(px, py)
+        # med_ = np.concatenate([med_, med_remaining])
 
         wmu[std==0] = np.nan
         wmu = wmu - wmu[np.abs(phs) == min(np.abs(phs))]
@@ -921,7 +1071,7 @@ def doall(b = su.bands):
         #tmp = movingaverage (dataphases['y'], 24 * 3 + 1,
         #                        1.0 / np.sqrt(dataphases['yerr']))
         #mymean[len(dataphases['y']) - len(tmp)/2 : - (len(dataphases['y']) - len(tmp)/2)] = tmp
-        smoothedmean = np.empty_like(mu) * np.nan
+        # smoothedmean = np.empty_like(mu) * np.nan
         #smoothedmean[25:-25] = smooth(mu, window_len=51)[25:-25]
         #print ((dataphases['y']), (dataphases['x']), (dataphases['yerr']))
         #smoothedmean = wAverageByPhase
@@ -934,35 +1084,119 @@ def doall(b = su.bands):
         #ax[0].fill_between(phs, smoothedmean-std, smoothedmean+std,
         #                color = 'k', alpha=0.5)
 
-        ax[0].plot(phs, med, 'r-', alpha=0.7, lw=2)
-        ax[0].plot(phs[std>0], wmu[std>0], 'k-', lw=2)
+
+        if b == 'g':
+
+            med_[phs[:len(med_)] > 50] = np.nan
+            med_[phs[:len(med_)] < -20] = np.nan
+            pc25_[phs[:len(pc25_)] > 50] = np.nan
+            pc25_[phs[:len(pc25_)] < -20] = np.nan
+            pc75_[phs[:len(pc75_)] > 50] = np.nan
+            pc75_[phs[:len(pc75_)] < -20] = np.nan
+
+            med__[phs[:len(med__)] > 50] = np.nan
+            med__[phs[:len(med__)] < -20] = np.nan
+            pc25__[phs[:len(pc25__)] > 50] = np.nan
+            pc25__[phs[:len(pc25__)] < -20] = np.nan
+            pc75__[phs[:len(pc75__)] > 50] = np.nan
+            pc75__[phs[:len(pc75__)] < -20] = np.nan
+
+        elif b == 'I':
+            med_[phs[:len(med_)] < -20] = np.nan
+            pc25_[phs[:len(pc25_)] < -20] = np.nan
+            pc75_[phs[:len(pc75_)] < -20] = np.nan
+
+            med__[phs[:len(med__)] < -20] = np.nan
+            pc25__[phs[:len(pc25__)] < -20] = np.nan
+            pc75__[phs[:len(pc75__)] < -20] = np.nan
+
+        elif b == 'i':
+            med_[phs[:len(med_)] < -20] = np.nan
+            pc25_[phs[:len(pc25_)] < -20] = np.nan
+            pc75_[phs[:len(pc75_)] < -20] = np.nan
+
+            med__[phs[:len(med__)] < -20] = np.nan
+            pc25__[phs[:len(pc25__)] < -20] = np.nan
+            pc75__[phs[:len(pc75__)] < -20] = np.nan
+
+        elif b == 'U':
+            med_[phs[:len(med_)] < -15] = np.nan
+            med_[phs[:len(med_)] > 40] = np.nan
+            pc25_[phs[:len(pc25_)] < -15] = np.nan
+            pc25_[phs[:len(pc25_)] > 40] = np.nan
+            pc75_[phs[:len(pc75_)] < -15] = np.nan
+            pc75_[phs[:len(pc75_)] > 40] = np.nan
+
+            med__[phs[:len(med__)] < -15] = np.nan
+            med__[phs[:len(med__)] > 40] = np.nan
+            pc25__[phs[:len(pc25__)] < -15] = np.nan
+            pc25__[phs[:len(pc25__)] > 40] = np.nan
+            pc75__[phs[:len(pc75__)] < -15] = np.nan
+            pc75__[phs[:len(pc75__)] > 40] = np.nan
+
+        elif b == 'u':
+            med_[phs[:len(med_)] < -25] = np.nan
+            med_[phs[:len(med_)] > 30] = np.nan
+            pc25_[phs[:len(pc25_)] > 30] = np.nan
+            pc25_[phs[:len(pc25_)] < -25] = np.nan
+            pc75_[phs[:len(pc75_)] > 30] = np.nan
+            pc75_[phs[:len(pc75_)] < -25] = np.nan
+
+            med__[phs[:len(med__)] < -25] = np.nan
+            med__[phs[:len(med__)] > 30] = np.nan
+            pc25__[phs[:len(pc25__)] > 30] = np.nan
+            pc25__[phs[:len(pc25__)] < -25] = np.nan
+            pc75__[phs[:len(pc75__)] > 30] = np.nan
+            pc75__[phs[:len(pc75__)] < -25] = np.nan
+
+        else:
+            # med_[phs[:len(med_)] < -25] = np.nan
+            med_[phs[:len(med_)] > 100] = np.nan
+            pc25_[phs[:len(pc25_)] > 100] = np.nan
+            # pc25[phs[:len(pc25)] < -25] = np.nan
+            pc75_[phs[:len(pc75_)] > 100] = np.nan
+            # pc75_[phs[:len(pc75_)] < -25] = np.nan
+
+            # med_[phs[:len(med_)] < -25] = np.nan
+            med__[phs[:len(med__)] > 100] = np.nan
+            pc25__[phs[:len(pc25__)] > 100] = np.nan
+            # pc25[phs[:len(pc25)] < -25] = np.nan
+            pc75__[phs[:len(pc75__)] > 100] = np.nan
+            # pc75_[phs[:len(pc75_)] < -25] = np.nan
+
+                
+
+        ax[0].plot(phs[:len(med_)], med_, 'k-', lw=2,zorder=10, label = 'Smoothed rolling median')
+        # ax[0].plot(phs[std>0], wmu[std>0], 'k-', lw=2)
         #ax[0].fill_between(phs[std>0], wmu[std>0]-std[std>0],
         #                   wmu[std>0]+std[std>0],
         #                   color = 'k', alpha=0.3)
-        ax[0].fill_between(phs[std>0],
-                           pc25[std>0],
-                           pc75[std>0],
+        ax[0].fill_between(phs[:len(med_)],
+                           pc25_,
+                           pc75_,
                            color = 'k', alpha=0.3)        
-        ax[0].fill_between(phs[std>0], wmu[std>0]-wgstd[std>0],
-                           wmu[std>0]+wgstd[std>0],
-                           color = 'k', alpha=0.5)                
+        # ax[0].fill_between(phs[std>0], wmu[std>0]-wgstd[std>0],
+        #                    wmu[std>0]+wgstd[std>0],
+        #                    color = 'k', alpha=0.5)                
                
         ax1 = pl.subplot(ax[2][-1,0])
         #ax1.plot(phs, mu, 'g-', lw=1, alpha=0.7, label="rolling mean")
         for thisax in [ax1, axtype]:
-            thisax.fill_between(phs[std>0],
-                             pc25[std>0],
-                             pc75[std>0],
+
+            # med__ = med_
+            thisax.fill_between(phs[:len(med__)],
+                             pc25__,
+                             pc75__,
                              color = 'k', alpha=0.3, label="IQR")
             #ax1.fill_between(phs[std>0], wmu[std>0]-std[std>0], wmu[std>0]+std[std>0],
             #                 color = 'k', alpha=0.3, label=r"$\sigma$")
             
-            thisax.fill_between(phs[std>0], wmu[std>0]-wgstd[std>0],
-                             wmu[std>0]+wgstd[std>0],
-                             color = 'k', alpha=0.6, label=r"$\sigma$")        
-            thisax.plot(phs, med, '-', color = 'IndianRed', alpha=0.7,
-                     lw=2, label="median")
-            thisax.plot(phs[std>0], wmu[std>0], 'k-', lw=2, label="mean")
+            # thisax.fill_between(phs[std>0], wmu[std>0]-wgstd[std>0],
+            #                  wmu[std>0]+wgstd[std>0],
+            #                  color = 'k', alpha=0.6, label=r"$\sigma$")        
+            thisax.plot(phs[:len(med__)], med__, 'k-',
+                     lw=2, label = 'Smoothed rolling median')
+            # thisax.plot(phs[std>0], wmu[std>0], 'k-', lw=2, label="mean")
             #ax1.plot(x, -smoothedmean, '-', color = 'SteelBlue', lw=2, label="smoothed")        
             #ax1.plot(phs, mymean, '-', color='yellow', alpha=0.7, lw=2,
             #         label="my mean")
@@ -993,32 +1227,34 @@ def doall(b = su.bands):
         #pl.show()
         ax1.grid(True)    
 
-        pl.savefig("outputs/UberTemplate_%s.pdf" % \
+        pl.savefig("ubertemplates/for the paper/UberTemplate_%s.pdf" % \
                    (b + 'p' if b in ['u', 'r', 'i']
                                             else b))
-        fig.savefig("outputs/UberTemplate_%s_types.pdf" % \
+        fig.savefig("ubertemplates/for the paper/UberTemplate_%s_types3.pdf" % \
                    (b + 'p' if b in ['u', 'r', 'i']
                                             else b))
 
         #pl.show() 
 
         
+
+        
         if BOKEHIT:
-            bokehplot(source, np.asarray(wmu), np.asarray(wgstd), np.asarray(phs), b)
+            bokehplot(source, np.asarray(med_), np.asarray(pc25_),np.asarray(pc75_), np.asarray(phs[:len(med_)]), b)
         
-        ut = {}#pd.DataFrame()
-        ut['phs'] = phs
-        ut['med'] = med
+        # ut = {}#pd.DataFrame()
+        # ut['phs'] = phs
+        # ut['med'] = med
         
-        ut['mu'] = wmu
-        ut['mu'][ut['mu'] == 0] = np.nan
+        # ut['mu'] = wmu
+        # ut['mu'][ut['mu'] == 0] = np.nan
         
-        ut['std'] = std
-        ut['wstd'] = wgstd        
-        ut['pc25'] = pc25
-        ut['pc75'] = pc75
+        # ut['std'] = std
+        # ut['wstd'] = wgstd        
+        # ut['pc25'] = pc25
+        # ut['pc75'] = pc75
         
-        ut, ut['spl'] = wSmoothAverage(ut,  3)
+        # ut, ut['spl'] = wSmoothAverage(ut,  3)
         
         '''
         ut.to_csv("UberTemplate_%i.csv" % \
@@ -1026,41 +1262,57 @@ def doall(b = su.bands):
                                             else b))
         '''
         #ut['spl'] = ut['mu']
-        
-        pkl.dump(ut, open("outputs/UberTemplate_%s.pkl" % \
+
+
+        templates['phs'] = phs
+        templates['mu'] = wmu
+        templates['mu'][templates['mu'] == 0] = np.nan
+        templates['wgstd'] = wgstd
+        templates['std'] = std
+        templates['pc25'] = pc25
+        templates['pc75'] = pc75
+        templates['pc25_smoothed'] = pc25_
+        templates['pc75_smoothed'] = pc75_
+        templates['med'] = med
+        templates['med_smoothed'] = med_
+        templates['wratio'] = err_ratio
+
+        templates, templates['spl_mu'], templates['spl_med'] = wSmoothAverage(templates,  3)
+    
+        pkl.dump(templates, open("outputs/UberTemplate_%s.pkl" % \
                    (b + 'p' if b in ['u', 'r', 'i']
                                             else b), 'wb'))
         # redo for R and V up to 40 days only
         
-        if b in ['V', 'R']:
-            #set weithed averge, median etc
+        # if b in ['V', 'R']:
+        #     #set weithed averge, median etc
+        #
+        #     phs2, wmu2, wgstd2, mu2, med2, std2, wstd2, dm2, pc25_2, pc75_2, err_ratio2, weights_med2, weights_mean2 = wAverageByPhase(dataphases, gsig, phsmax=40)
+        #     wmu2[std2==0] = np.nan
+        #     wmu2 = wmu2 - wmu2[np.abs(phs2) == min(np.abs(phs2))]
+        #
+        #     med_2 = savitzky_golay(med2, 171, 3)
+        #     templates2 = {}
+        #
+        #     templates2['phs'] = phs2
+        #     templates2['wmu'] = wmu2
+        #     templates2['wgstd'] = wgstd2
+        #     templates2['std'] = std2
+        #     templates2['pc25'] = pc25_2
+        #     templates2['pc75'] = pc75_2
+        #     templates2['med'] = med2
+        #     templates2['med_smoothed'] = med_2
+        #     templates2['wratio'] = err_ratio2
+            
 
-            phs2, wmu2, wgstd2, mu2, med2, std2, wstd2, dm2, pc25_2, pc75_2 = wAverageByPhase(dataphases, gsig, phsmax=40)
-            wmu2[std2==0] = np.nan
-            wmu2 = wmu2 - wmu2[np.abs(phs2) == min(np.abs(phs2))]
-            
-            smoothedmean2 = np.empty_like(mu2) * np.nan
-            ut2 = {}#pd.DataFrame()
-            ut2['phs'] = phs2
-            ut2['med'] = med2
-            
-            ut2['mu'] = wmu2
-            ut2['mu'][ut2['mu'] == 0] = np.nan
-            ut2['std'] = std2
-            ut2['wstd'] = wgstd2            
-            ut2['pc25'] = pc25_2
-            ut2['pc75'] = pc75_2
-            ut2, ut2['spl'] = wSmoothAverage(ut2,  2)
-            
-
-            pkl.dump(ut2, open("outputs/UberTemplate_%s40.pkl"%b, 'wb'))      
+            # pkl.dump(templates2, open("outputs/UberTemplate_%s40.pkl"%b, 'wb'))
 
  
     pd.DataFrame.from_dict(dms, orient='index').\
         to_csv("outputs/dmsUberTemplates.csv")
                
-if __name__ == '__main__':
-    if len(sys.argv)>1:
-        doall(b = [sys.argv[1]])
-    else:
-        doall()
+# if __name__ == '__main__':
+# if len(sys.argv)>1:
+#     doall(b = [sys.argv[1]])
+# else:
+doall()

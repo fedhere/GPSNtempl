@@ -1,28 +1,6 @@
 import numpy as np
-import glob
 import os
-import inspect
 import sys
-import pickle as pkl
-import pandas as pd
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import interp1d
-    
-from bokeh.plotting import Figure as bokehfigure
-from bokeh.plotting import save as bokehsave
-from bokeh.plotting import show as bokehshow
-from bokeh.plotting import figure, output_file
-from bokeh.layouts import column
-from bokeh.models import  BoxZoomTool, HoverTool, ResetTool, TapTool
-from bokeh.models import ColumnDataSource, CustomJS,  Range1d
-
-#, HBox, VBoxForm, BoxSelectTool, TapTool
-#from bokeh.models.widgets import Select
-#Slider, Select, TextInput
-from bokeh.io import gridplot
-from bokeh.plotting import output_file
-from numpy import convolve
-import matplotlib.gridspec as gridspec
 
 archetypicalSNe = ['94I', '93J', '08D', '05bf', '04aw', '10bm', '10vgv']
 
@@ -44,7 +22,7 @@ if cmd_folder not in sys.path:
 from snclasses import *
 from templutils import *
 from makePhottable import *
-from colors import hexcolors, allcolors, colormaps
+
 
 #prepping SN data from scratch
 PREP = True 

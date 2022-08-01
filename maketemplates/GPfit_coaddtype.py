@@ -60,6 +60,8 @@ SNTYPE = 'Ic-bl'
 
 #pl.ion()
 readgood = pd.read_csv("goodGPs.csv", header=None)
+# print('readgood is ' ,readgood)
+# meansmooth = lambda x : np.zeros_like(x)
 #print readgood
 #sys.exit()
 
@@ -68,7 +70,8 @@ DEBUG = False
 tcorlims = {
      'R':{'tmin':10, 'tmax':20},
      'V':{'tmin':10, 'tmax':20},     
-     'r':{'tmin':10, 'tmax':20},                    
+     'r':{'tmin':10, 'tmax':20},
+     'g':{'tmin':10, 'tmax':20},                    
      'U':{'tmin':20, 'tmax':0},
      'u':{'tmin':20, 'tmax':0},                     
      'J':{'tmin':20, 'tmax':10},
@@ -151,7 +154,7 @@ if __name__ == '__main__':
           # read metadata for SN
           thissn.readinfofileall(verbose=False, earliest=False, loose=True)
           #thissn.printsn()
-          if not thissn.sntype == SNTYPE:
+          if not thissn.type == SNTYPE:
                continue
           if thissn.snnameshort in avoid:
                continue
@@ -179,13 +182,15 @@ if __name__ == '__main__':
           # see if SN is in the list of good SNe with ok GP fits
           goodbad = readgood[readgood[0] == thissn.name]
 
+          # print('goodbad is ', goodbad)
+
           if len(goodbad)==0:
                if DEBUG:
                     raw_input()
                continue
      
           #check that it is k
-          if np.array([n for n in thissn.filters.itervalues()]).sum() == 0:
+          if np.array([n for n in thissn.filters.values()]).sum() == 0:
                print ("bad sn")
                continue
      
@@ -221,6 +226,8 @@ if __name__ == '__main__':
                y = photmin - y
                
                yerr = thissn.photometry[b]['dmag']
+
+               # print('We are printing x and y',x,y)
         
                pklf = "outputs/GPfit%s_%s.pkl"%(sn,b)
                if not os.path.isfile(pklf):
@@ -237,9 +244,11 @@ if __name__ == '__main__':
                          print ("error")
                          raw_input()
                     continue
+               # print(mu)
                std = np.sqrt(np.diag(cov))
                if (np.abs(mu)<0.1).all():
                     continue
+
                mus[i][j] = mu - mu[np.abs(t)==np.abs(t).min()]
                
                stds[i][j] = std
@@ -261,8 +270,8 @@ if __name__ == '__main__':
                                   mus[i][j] + meansmooth(t) + std ,
                                   color='grey', alpha=0.1)
                
-               truemax = np.where(np.array(mus[i][j] + meansmooth(t)) ==
-                                  (np.array(mus[i][j] + meansmooth(t))[tcore]).max())[0][0]
+               truemax = np.where(np.array(mus[i][j] + meansmooth(t)) == 
+                                  np.nanmax(np.array(mus[i][j] + meansmooth(t))[tcore]) )[0][0]
 
                if truemax < 5:
                     minloc = np.where(np.array(mus[i][j] + meansmooth(t)) ==
@@ -275,8 +284,10 @@ if __name__ == '__main__':
 
                     if np.abs(truemax - np.where(t == t[tcore][0])[0][0]) < 2:
                          truemax = np.where(t == 0)[0][0]
+
                t2 = t - t[truemax]
                t20 = np.where(t2==0)[0][0]
+
                yoffset = (mus[i][j] + meansmooth(t))[t20]
                axv2[b][0].plot(t2, mus[i][j] + meansmooth(t) -
                                yoffset,  lw=2,
@@ -322,14 +333,29 @@ if __name__ == '__main__':
                                   mus[i][j] + meansmooth(t) + std -yoffset,
                                   color='grey', alpha=0.1)               
                tmin, tmax = t2.min(), t2.max()
-               if tmin >= t[0]: 
-                    musShifted[i][j][truemax:] = (mus[i][j] + meansmooth(t))[:-truemax]
-                    stds[i][j][truemax:] = std[:-truemax]
-               if tmin < t[0]:
-                    tstart = np.where(t2 == t[0])[0][0]
-                    musShifted[i][j][:-tstart] = (mus[i][j] + meansmooth(t) -
-                                                  yoffset)[tstart:]
-                    stdsShifted[i][j][:-tstart] = std[tstart:]
+               
+
+               # After shifiting the mus, we remove the parts of the light curve out of the original interval
+               # And we put the empty part of the light curve within that interval equal to nan.
+
+               if t.min()>tmin:
+                ind_max = np.where(t == t.max()-t[truemax])[0][0]
+                musShifted[i][j][:ind_max] = (mus[i][j] + meansmooth(t))[-ind_max:]
+                stdsShifted[i][j][:ind_max] = std[-ind_max:]
+                    
+               elif t.min()<tmin:
+                ind_min = np.where(t == t.min()-t[truemax])[0][0]                
+                musShifted[i][j][ind_min:] = (mus[i][j] + meansmooth(t))[:-ind_min]
+                stdsShifted[i][j][ind_min:] = std[:-ind_min]
+
+               else:
+
+                musShifted[i][j] = (mus[i][j] + meansmooth(t))
+                stdsShifted[i][j] = std
+    
+
+
+
                if DEBUG:
                     print ("all the way down")
                     raw_input()                    
@@ -342,6 +368,10 @@ if __name__ == '__main__':
           #raw_input()
 
      #for k,m in enumerate(mus):
+     np.save('mus.npy', mus)
+     np.save('stds.npy', stds)
+     np.save('musShifted.npy', musShifted)
+     np.save('stdsShifted.npy', stdsShifted)
      for j,b in enumerate(bands):
           #if not b=='B':
           #     continue
@@ -375,18 +405,27 @@ if __name__ == '__main__':
                                    np.isnan(stdsShifted) + ~np.isfinite(stdsShifted) +\
                                    ~np.isfinite(1.0/stdsShifted)          #mask[50:] = True
 
+
+
           #nlcvs = (~mask[:,j,:]).sum(1)
           #minmaxlcvs =  (np.nanmin(nlcvs[nlcvs>1]), np.nanmax(nlcvs[nlcvs>1]))
           #print (minmaxlcvs)
                                    
           #continue
+
+          # print(mus)
+
           mus = np.ma.masked_array(mus, mask)
           stds = np.ma.masked_array(stds, mask)
-          
+
+
+
+
+
           musShifted = np.ma.masked_array(musShifted, maskShifted)
           stdsShifted = np.ma.masked_array(stdsShifted, maskShifted)
 
-          #print (mus[:,j,27:32],stds[:,j,27:32])
+
           average = np.ma.average(mus[:,j,:], axis=0,
                                   weights = 1.0/stds[:,j,:]**2)
 
@@ -395,15 +434,20 @@ if __name__ == '__main__':
                                    * np.nansum(1.0/stds[:,j,:]**2, axis=0) \
                                    / (np.nansum(1.0/stds[:,j,:]**2, axis=0) - 1)
 
+          
 
           averageShifted = np.ma.average(musShifted[:,j,:], axis=0,
                                   weights = 1.0/stdsShifted[:,j,:]**2)
+
 
           varianceShifted = np.ma.average((musShifted[:,j,:]-averageShifted)**2, axis=0,
                                    weights=1.0/stdsShifted[:,j,:]**2) \
                                    * np.nansum(1.0/stdsShifted[:,j,:]**2, axis=0) \
                                    / (np.nansum(1.0/stdsShifted[:,j,:]**2, axis=0) - 1)
+
           
+          
+          meansmooth = lambda x : np.zeros_like(x)
           std = np.ma.std( mus[:,j,:] + meansmooth(t),   axis=0)
           stdShifted = np.ma.std( musShifted[:,j,:] + meansmooth(t),   axis=0)          
           #          print (average.shape, variance.shape, meansmooth(t).shape)
@@ -529,7 +573,7 @@ if __name__ == '__main__':
           figs[j].savefig("outputs/GPalltemplfit_%s_%s_V0.png"%(SNTYPE,bb))
           figsv1[j].savefig("outputs/GPalltemplfit_%s_%s_V1.pdf"%(SNTYPE,bb))
           figsv2[j].savefig("outputs/GPalltemplfit_%s_%s_V2.png"%(SNTYPE,bb))          
-          os.system("pdfcrop outputs/GPalltemplfit_%s_%s_V1.pdf /Users/fbianco/science/Dropbox/papers/SESNtemplates.working/figs/GPalltemplfit_%s_%s_V1.pdf"%(SNTYPE,bb,SNTYPE,bb))
+          # os.system("pdfcrop outputs/GPalltemplfit_%s_%s_V1.pdf /Users/fbianco/science/Dropbox/papers/SESNtemplates.working/figs/GPalltemplfit_%s_%s_V1.pdf"%(SNTYPE,bb,SNTYPE,bb))
 
 
 
