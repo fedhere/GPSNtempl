@@ -1,8 +1,0 @@
-(dp0
-S'lc'
-p1
-(lp2
-sS'names'
-p3
-(lp4
-s.
