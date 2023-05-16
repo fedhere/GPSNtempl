@@ -1,0 +1,43 @@
+%\begin{turnpage}
+%\tabletypesize{\tiny}
+\begin{deluxetable*}{lccccc}
+  \singlespace
+\setlength{\tabcolsep}{6pt} 
+\centering
+%\tablewidth{614.88pt}
+\tablecaption{SN type and host galaxy details.}
+\tablehead{ & 
+  \colhead{SN Type}  &
+  \colhead{GRB}  &
+  \colhead{$z$ \tablenotemark{a}}&
+  %\colhead{$E(B-V)_\mathrm{MW}$\tablenotemark{b}} &
+  \colhead{Host Galaxy} &
+  %\colhead{$E(B-V)_\mathrm{host} NaID$\tablenotemark{c}} &
+  %\colhead{$E(B-V)_\mathrm{host} env$\tablenotemark{c}} &
+  %\colhead{$E(B-V)_\mathrm{host} other$\tablenotemark{c}} &
+  %\colhead {extinction reference} & \colhead{NaID method}
+}
+
+\startdata
+%\tabletypesize{\scriptsize}
+\input{tables/ejectadata_host}
+\enddata
+
+\tablenotetext{a}{Redshift, as reported by Simbad (\url{http://simbad.u-strasbg.fr/simbad/}) for the SN or associated GRB.}
+
+
+%\tablenotetext{e}{`Y': the photospheric velocity is measured from a single spectrum within 2 days of \maxep, `N': photospheric velocity is measured from two spectra stradling \maxep and within eight days of \maxep.}
+\clearpage
+
+\tablenotetext{1}{As reported by Simbad for the host galaxy.}
+
+\tablenotetext{2}{\citet{prochaska04} suggets a possible identification of the host galaxy of SN~2003lw/GRB~031203 with HG 031203. The high line of sight extinction makes host galaxy identificatrion an characterization difficult.}
+
+\tablenotetext{3}{Radio relativistic, no GRB detected.}
+\tablenotetext{4}{Also PTF~2010bzf.}
+
+\label{tab:hostgal}
+
+ 
+\end{deluxetable*}
+%\end{turnpage}

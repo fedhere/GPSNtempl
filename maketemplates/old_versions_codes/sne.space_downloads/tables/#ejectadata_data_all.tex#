@@ -1,0 +1,90 @@
+% name                       &     type     &    GRB     &   optical &     UV      &     NIR       &    other   &     spectra
+% z                                        &   host                  &  discovery ref
+{SN~1983V}                   &      Ic      &            & \citet{clocchiatti97}        &      ?      &       ?       &                         &     ?
+&1.0991$\times10^{-2}$(2)                   &  NGC 1365              &	           IAUC 3895    \\            
+{SN~1993J}                   &      IIb     &            &\citet{benson94},             &      ?      &       ?       &                         &     M14
+&    -1$\times10^{-4}$                      &  M81       	     &	           IAUC 5731    \\
+                             &             \citet{richmond94}             &            &               &                         &     
+&                                          &                  	     &	                        \\
+{SN~1994I}                   &       Ic     &            &\citet{richmond96}            &      ?      &       ?       &X-ray \citep{immler02}   &     M14
+&     1.5$\times10^{-3}$                    &  M51      	     &	           IAUC 5961    \\
+                             &              &            &                              &             &               &Radio \citep{weiler11}   &     
+&                                          &                  	     &	                        \\
+                             &              &            &                              &             &               &Radio \citep{alexander15}&     
+&                                          &                  	     &	                        \\
+{SN~1996cb}                  &      IIb     &            &\citet{qiu99}                 &      ?      &       ?       &Radio \citep{vandyk97}   &     M14
+&     2.4$\times10^{-3}$                    &  NGC 3510   	     &             IAUC 6524	\\
+{SN~1998bw}                  & Ic-BL        & 980425     &\citet{clocchiatti11}         &      ?      &       ?       &X-ray \citep{pian00}     &     ?
+&     8.5$\times10^{-3}$                    &  ESO 184-G82           & 	           IAUC 6884    \\
+                             &              &            &                              &             &               &Radio \citep{kulkarni98} &     
+&                                          &                  	     &	                        \\
+{SN~1999ex}                  &      Ib      &            &\citet{stritzinger02b}         &      ?      &       ??? possibly unpublished    &                        &     ?
+&      1.1$\times10^{-2}$                  &  IC5179     	     & 	           IAUC 7310    \\
+{SN~2002ap}                  &     Ic-BL    &            &\citet{yoshii03}               &      ?      &\citet{yoshii03}&                       &      M14
+&      2.20$\times10^{-3}$                  &  M74      	     &             IAUC 7810	\\
+                             &              &            &\citet{pandey03}                             &      & \citet{yoshii03}&     
+&                                          &                  	     &	                        \\
+{SN~2003dh}\tablenotemark{1} &  Ic-BL       & 030329     &\citet{matheson03}&      ?      &\citet{matheson03}&                  &      ?
+&      1.685$\times10^{-1}$                 &  Anonimoius             & 	   GCN 1995 (?) \\
+                             &              &            &\citet{lipkin04}   &             &               &                          &     
+&                                          &                  	     &	                        \\
+                             &              &            &\citet{deng05}\tablenotemark{3}    &             &               &                          &     
+&                                          &                  	     &	                        \\
+{SN~2003jd}                  &     Ic-BL    &            &   B14                        &      ?      &       B14     &                         &      M14
+&      1.880$\times10^{-2}$                 &  MCG-01-59-21 	     &             IAUC 8232	\\    
+{SN~2004aw}                  &      Ic      &            &   B14                        &      ?      &       -       &                         &      M14
+&      1.59$\times10^{-2}$                  &  NGC 3997   	     & 	           IAUC 8310	\\
+{SN~2004gq}                  &      Ib      &            &  B14, D11                    &      ?      &       ?       &Radio \citep{wellons12}  &      M14
+&   6.462$\times10^{-3}$ (2)                &  NGC 1832   	     & 	           IAUC 8452	\\
+{SN~2004fe}                  &      Ic      &            &    ?                         &      ?      &       ?       &                         &      M14
+&    1.788$\times10^{-2}$                   &  NGC 132    	     &             IAUC 8417	\\
+{SN~2005az}                  &      Ic      &            &   B14                        &      ?      &       B14     &                         &      M14
+&  8.75$\times10^{-3}$                      &  NGC 4961   	     &             IAUC 8503	\\
+{SN~2005bf}                  &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+&  1.89$\times10^{-2}$                      &  NGC 4490   	     & 	           IAUC 8507	\\
+{SN~2005hg}                  &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+&(2.131$\pm$0.003)$\times10^{-2}$ (2)       &  UGC 1394   	     & 	           IAUC 8623	\\
+{SN~2005kl}\tablenotemark{1} &      Ic      &            &   B14                        &      ?      &       B14     &                         &      M14
+&(3.49$\pm$0.01)$\times10^{-3}$ (2)         &  NGC 4369   	     &             CBET 300 	\\
+{SN~2006aj}\tablenotemark{1} &   Ic-BL      & 060218     &   B14                        &\citet{brown09}& B14     &                         &      M14
+&     3.342$\times10^{-2}$                  &J032139.68+165201.7      &            IAUC 8674 	\\
+{SN~2007C}                   &      Ib      &            &   B14                        &      ?      &       B14     &                         &      M14
+& 5.602$\times10^{-3}$ (2)                  &  NGC 4981               & 	   CBET 798	\\
+{SN~2007Y}                   &      Ib      &            &\citet{stritzinger09}       &\citep{brown09}&\citet{stritzinger09}&                   &\citet{stritzinger09}
+& 4.64$\times10^{-3}$                       &  NGC 1187   	     & 	           CBET 845     \\
+                             &              &            &                              &             &               &Radio \citep{stritzinger09}&     
+&                                          &                  	     &	                        \\
+{SN~2007gr}                  &      Ic      &            &B14,\citet{hunter09}          &      ?      &B14, \citet{hunter09} &Radio \citep{paragi10}&  M14
+&  1.73$\times10^{-3}$                      &  NGC 1058   	     & 	           IAUC 8864    \\
+{SN~2007ru}                  &     Ic-BL    &            &   B14                        &      ?      &       ?       &                         &      M14
+&(1.5471$\pm$0.0010)$\times10^{-2}$ (2)     &  UGC 12381              & 	   CBET 1149   	\\
+{SN~2008D}                   &      Ib      &            &   B14                        &\citet{modjaz09}&    B14     &                         &      M14
+&  7.00$\times10^{-3}$                      &  NGC 2770   	     & 	           CBET 1202    \\
+{SN~2008ax}                  &      IIb     &            &\citet{pastorello08c}         &\citet{pritchard13} &B14     &                         & \citet{chornock11}
+&   1.9$\times10^{-3}$                      &  NGC 4490   	     & 	           CBET 1280	\\
+{SN~2008bo}                  &      IIb     &            &   B14                        &\citet{pritchard13}& ?       &                         &     M14
+&(4.967$\pm$0.030)$\times10^{-3}$ (2)       &  NGC 6643               & 	   CBET 1324	\\
+{SN~2009bb}                  & Ic-BL        &  undetected&    ?                         &      ?      &       ?       &                         &     ?
+&(9.937$\pm$0.083)$\times10^{-3}$  (2)      &  NGC 3278               &            CBET 1731   \\
+{SN~2009jf}                  &      Ib      &            &   B14                        &\citet{pritchard13}& B14     &                         &     M14
+&  7.942$\times10^{-3}$                     &  NGC 7479   	     &             CBET 1952	\\      
+{SN~2009mg}                  &      IIb     &            &    ?                         &\citet{pritchard13}& ?       &                         &         ?
+& 7.615$\times10^{-3}$                      &  ESO 121-26             &             CBET 2071   \\
+{SN~2010as}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{folatelli14}
+& 7.354$\times10^{-3}$                      &  NGC 6000               &             CBET 2215    \\
+{SN~2010bh}                  &      Ic-BL   & 100316D    &    ?                         &      ?      &       ?       &                         &         ?
+& 5.91$\times10^{-2}$                       &  Anonimous              &             GCN 10496    \\
+{SN~2011ei}\tablenotemark{1} &      IIb     &            &    ?                         &      ?      &       ?       &                         &        ?
+&  9.317$\times10^{-3}$ (2)                 &  NGC 6925 	     &  	   CBET 2777    \\
+{SN~2011bm}                  &      Ic      &            &    ?                         &      ?      &       ?       &                         &         ?
+&  1.5$\times10^{-3}$                       &  IC 3917                &  	   CBET 2695 	\\
+{SN~2011fu}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{moralesgaroffolo15}
+&(1.849$\pm$0.003)$\times10^{-2}$ (2)       &  UGC 1626   	     &  	   CBET 2827 	\\
+{SN~2011hs}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{bufano14}
+&5.701$\times10^{-3}$ (2)                   &  IC 5267   	     &  	   CBET 2902 	\\
+{SN~2013df}                  &      IIb     &            &    ?                         &      ?      &       ?       &                         & \citet{moralesgaroffolo14}
+& 2.388$\times10^{-3}$                      &  NGC 4414               &  	   CBET 3557 	\\
+{SN~2013dx}                  &      Ic-BL   &130702A     &    ?                         &      ?      &       ?       &                         & ?
+& 1.45$\times10^{-1}$                       &       Anonimous         &  	   CBET 3587 	\\
+{PTF10vgv}\tablenotemark{1}  &      Ic-BL   &            &    ?                         &      ?      &       ?       &                         & ?
+&(1.42$\pm$0.02)$\times10^{-2}$             &J221601.54+405206.5      &  	   ATEL 2914    \\
