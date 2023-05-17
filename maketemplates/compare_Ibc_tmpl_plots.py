@@ -21,6 +21,7 @@ cmd_folder = os.getenv("SESNCFAlib") + "/templates"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+
 from matplotlib.ticker import AutoMinorLocator
 
 # plt.rc('font', **font)
