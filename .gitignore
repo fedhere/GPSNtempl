@@ -2,6 +2,7 @@ node_modules/
 build/
 npm-debug.log
 .env
+*.pyc
 .env.test
 .env.production
 .DS_Store
