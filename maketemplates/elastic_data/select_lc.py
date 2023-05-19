@@ -24,80 +24,79 @@ def read_lc(directory, num = 40):
 	return sne
 
 def select_lc(sne, max_dist = 5, high_SN_ratio_threshold = 10, least_num_high_SN = 5, ref_band = 'r ', redshift_threshold = 0.2):
-
 	selected_lc = {}
+	bb = ['u ', 'g ', 'r ', 'i ']
 
-	b = ref_band
-	count = 0
+	count = {'u': 0,
+			 'g': 0,
+			 'r': 0,
+			 'i': 0}
 
-	for c,data in enumerate(sne):
+	c = 0
+	for j, data in enumerate(sne):
 
-		
-
-		# print(len(data))
-		
 		for i in range(len(data)):
-			
+			selected_lc[c] = {}
+			tmp = 4
+
 			if data[i].meta['REDSHIFT_HELIO'] > redshift_threshold:
-	#             print (i, ': Redshift is larger than 0.2!')
 				continue
-			
-			
 
-			t = np.asarray(data[i]['MJD'][np.asarray(list(data[i]['BAND'])) == b])
-			f = np.asarray(data[i]['FLUXCAL'][np.asarray(list(data[i]['BAND'])) == b])
-			ferr = np.asarray(data[i]['FLUXCALERR'][np.asarray(list(data[i]['BAND'])) == b]) 
-			SN = f/ferr
+			for b in bb:
 
-			if (np.argmax(f) == 0) or (np.argmax(f) == -1):
-				continue
-				
-			try:
-				if ((t[np.argmax(f)]-t[np.argmax(f)-1]) > max_dist) or ((t[np.argmax(f)+1]-t[np.argmax(f)]) > max_dist):
+				x_peak = data[i].meta['PEAKMJD']
+
+				t = np.asarray(data[i]['MJD'][data[i]['BAND'] == b])
+				f0 = np.asarray(data[i]['ZEROPT'][data[i]['BAND'] == b])
+				f = np.asarray(data[i]['FLUXCAL'][data[i]['BAND'] == b])
+				ferr = np.asarray(data[i]['FLUXCALERR'][data[i]['BAND'] == b])
+				SN = f / ferr
+
+				t = t[f > 0]
+				ferr = ferr[f > 0]
+				SN = SN[f > 0]
+				f = f[f > 0]
+
+				if len(t[((t - x_peak) > -max_dist) & ((t - x_peak) < max_dist)]) < 1:
+					tmp -= 1
 					continue
-			except:
-				continue
-			
 
-			if np.sum(SN > high_SN_ratio_threshold) > least_num_high_SN:
-				
-				selected_lc[str(count)] = {}
-				selected_lc[str(count)]['u']= {}
-				selected_lc[str(count)]['g']= {}
-				selected_lc[str(count)]['r']= {}
-				selected_lc[str(count)]['i']= {}
+				if np.sum(SN > high_SN_ratio_threshold) < least_num_high_SN:
+					tmp -= 1
+					continue
 
-				
-				
-				selected_lc[str(count)]['r']['t'] = t
-				selected_lc[str(count)]['r']['f'] = f
-				selected_lc[str(count)]['r']['ferr'] = ferr
-				
-				
-				t = np.asarray(data[i]['MJD'][np.asarray(list(data[i]['BAND'])) == 'u '])
-				f = np.asarray(data[i]['FLUXCAL'][np.asarray(list(data[i]['BAND'])) == 'u '])
-				ferr = np.asarray(data[i]['FLUXCALERR'][np.asarray(list(data[i]['BAND'])) == 'u '])
-				
-				selected_lc[str(count)]['u']['t'] = t
-				selected_lc[str(count)]['u']['f'] = f
-				selected_lc[str(count)]['u']['ferr'] = ferr
-				
-				t = np.asarray(data[i]['MJD'][np.asarray(list(data[i]['BAND'])) == 'g '])
-				f = np.asarray(data[i]['FLUXCAL'][np.asarray(list(data[i]['BAND'])) == 'g '])
-				ferr = np.asarray(data[i]['FLUXCALERR'][np.asarray(list(data[i]['BAND'])) == 'g '])
-				
-				selected_lc[str(count)]['g']['t'] = t
-				selected_lc[str(count)]['g']['f'] = f
-				selected_lc[str(count)]['g']['ferr'] = ferr
-				
-				t = np.asarray(data[i]['MJD'][np.asarray(list(data[i]['BAND'])) == 'i '])
-				f = np.asarray(data[i]['FLUXCAL'][np.asarray(list(data[i]['BAND'])) == 'i '])
-				ferr = np.asarray(data[i]['FLUXCALERR'][np.asarray(list(data[i]['BAND'])) == 'i '])
-				
-				selected_lc[str(count)]['i']['t'] = t
-				selected_lc[str(count)]['i']['f'] = f
-				selected_lc[str(count)]['i']['ferr'] = ferr
-				
-				count = count + 1
+				low_lim = -50
+				up_lim = 100
 
+				ind = (t < up_lim + x_peak) & (t > low_lim + x_peak)
+
+				y = f[ind]
+				yerr = ferr[ind]
+				x = t[ind]
+
+				m = 27.5 - 2.5 * np.log10(y)
+				merr = 2.5 / np.log(10) * yerr / y
+
+				ind = (x - x_peak < 5) & (x - x_peak > -5)
+				if len(m[ind]) == 0:
+					tmp -= 1
+					continue
+				mmax = np.min(m)
+
+				selected_lc[c][b.strip()] = {}
+				selected_lc[c][b.strip()]['x'] = x
+				selected_lc[c][b.strip()]['y'] = y
+				selected_lc[c][b.strip()]['yerr'] = yerr
+				selected_lc[c][b.strip()]['m'] = m
+				selected_lc[c][b.strip()]['merr'] = merr
+				selected_lc[c][b.strip()]['x_peak'] = x_peak
+				selected_lc[c][b.strip()]['y_peak_m'] = mmax
+
+				count[b.strip()] += 1
+
+			if tmp != 0:
+				c += 1
+
+	print('total lc:', c)
+	print('number of lc in u, g, r, i:', count['u'], count['g'], count['r'], count['i'])
 	return selected_lc
