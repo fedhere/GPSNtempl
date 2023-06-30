@@ -148,8 +148,8 @@ for i, sn in enumerate(atypicals):
             if np.isnan(t_max):
                 y = -y
                 pklf = os.getenv("SESNPATH") + "./../GPSNtempl_output/outputs/GPs_2022/GPfit%s_%s.pkl" % (
-                sn, b + 'p' if b in ['u', 'r', 'i']
-                else b)
+                    sn, b + 'p' if b in ['u', 'r', 'i']
+                    else b)
                 if not os.path.isfile(pklf):
                     print("missing GP file ", pklf)
                     # raw_input()
@@ -185,7 +185,11 @@ for i, sn in enumerate(atypicals):
                     continue
                 if xmin < -5:
                     # y = y[np.abs(x) == np.min(np.abs(x))] -y
-                    min_y = np.min(y[(x > -5) & (x < 5)])
+                    try:
+                        min_y = np.min(y[(x > -5) & (x < 5)])
+                    except:
+                        print(sn, b, 'no data between -5 and 5 days')
+                        continue
                 else:
                     min_y = np.min(y)
 
@@ -243,12 +247,17 @@ if len(bands) == 1:
     plt.subplots_adjust(hspace=.04, wspace=0.04)
 elif len(bands) < 4:
     fig, axs = plt.subplots(1, len(bands), figsize=(60, 20), sharey=True, sharex=True)
-    legsize = 45
-    labelsize = 65
+    legsize = 60
+    labelsize = 70
     plt.subplots_adjust(hspace=.04, wspace=0.04)
 else:
     fig, axs = plt.subplots(int(round(len(bands) / 2, 0)), 2, figsize=(50, 15 * int(round(len(bands) / 2, 0))),
                             sharey=True, sharex=True)
+
+    subplot_indexes = {'B': 0, 'u': 1,
+                       'g': 2, 'V': 3,
+                       'r': 4, 'R': 5,
+                       'i': 6, 'I': 7}
     legsize = 55
     labelsize = 65
     plt.subplots_adjust(hspace=.04, wspace=0.04, bottom=0.08)
@@ -259,6 +268,10 @@ n_panels = len(axs.flatten())
 # handles, labels = [[]]*len(atypicals), [[]]*len(atypicals)
 
 for i, b in enumerate(bands):
+    if len(bands) == 7:
+        index = subplot_indexes[b]
+    else:
+        index = i
 
     for j in range(len(atypicals_phot[b]['x'])):
 
@@ -266,10 +279,10 @@ for i, b in enumerate(bands):
 
             if sn_temp == 0:
 
-                axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+                axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
                                           color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
-                axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+                axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                           color=all_atypicals[atypicals_phot[b]['name'][j]],
                                           label=str(atypicals_phot[b]['name'][j]) + ', ' + str(
@@ -277,18 +290,18 @@ for i, b in enumerate(bands):
                 sn_temp = sn_temp + 1
             else:
 
-                axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+                axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
                                           color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
-                axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+                axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                           color=all_atypicals[atypicals_phot[b]['name'][j]])
         else:
 
-            axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+            axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
                                       color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
-            axs.flatten()[i].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
+            axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                       color=all_atypicals[atypicals_phot[b]['name'][j]],
                                       label=str(atypicals_phot[b]['name'][j]) + ', ' + str(
@@ -296,13 +309,13 @@ for i, b in enumerate(bands):
 
     # if len(tmpl[b][SNTYPE]) == 0:
     #     continue
-    axs.flatten()[i].plot(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingMedian'],
+    axs.flatten()[index].plot(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingMedian'],
                           color='k', linewidth=6)
-    axs.flatten()[i].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
+    axs.flatten()[index].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
                                   color='grey', alpha=0.5)
-    axs.flatten()[i].set_xlim(-25, 105)
-    axs.flatten()[i].set_ylim(-4.5, .5)
-    axs.flatten()[i].text(0.8, 0.9, b + ', ' + SNTYPE, transform=axs.flatten()[i].transAxes, size=50)
+    axs.flatten()[index].set_xlim(-25, 105)
+    axs.flatten()[index].set_ylim(-4.5, .5)
+    axs.flatten()[index].text(0.8, 0.9, b + ', ' + SNTYPE, transform=axs.flatten()[index].transAxes, size=60)
 
 handles = []
 for i in range(len(axs.flatten())):
@@ -311,8 +324,9 @@ for i in range(len(axs.flatten())):
 labels = []
 for i in range(len(axs.flatten())):
     labels += (axs.flatten()[i]).get_legend_handles_labels()[1]
-
-hl = [[],[]]
+if len(bands) == 7:
+    fig.delaxes(axs.flatten()[1])
+hl = [[], []]
 
 dups = duplicates(labels)
 dups_indx = duplicates_indices(labels)
@@ -328,17 +342,17 @@ for i, label in enumerate(labels):
         hl[0].append(label)
         hl[1].append(handles[i])
 
-if len(labels)<6:
+if len(labels) < 6:
     legend_col_num = len(labels)
 else:
-    if len(labels)%5 == 0:
+    if len(labels) % 5 == 0:
         legend_col_num = 5
-    if len(labels)%4 == 0:
+    if len(labels) % 4 == 0:
         legend_col_num = 4
     if len(labels) % 3 == 0:
         legend_col_num = 3
 
-fig.legend(hl[1], hl[0], loc='upper center', ncol=legend_col_num, prop={'size': 50})
+fig.legend(hl[1], hl[0], loc='upper center', ncol=legend_col_num, prop={'size': legsize})
 
 frame1 = fig.text(0.09, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
 frame2 = fig.text(0.45, 0.05, 'Phase (days)', va='center', size=labelsize)
@@ -347,9 +361,11 @@ frame2 = fig.text(0.45, 0.05, 'Phase (days)', va='center', size=labelsize)
 
 
 for ax in axs.flatten():
-    ax.tick_params(axis="both", direction="in", which="major", right=True, top=True, size=12, labelsize=50, width=2)
+    ax.tick_params(axis="both", direction="in", which="major", right=True, top=True, size=12, labelsize=labelsize, width=2)
     ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=7, width=2)
     ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
-plt.subplots_adjust(hspace=0, wspace=0, top = 0.92)
-plt.savefig(os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_GP_%s_in_%s_bands_Ho2021_2.pdf' % (SNTYPE, len(bands)), bbox_inches='tight')
+plt.subplots_adjust(hspace=0, wspace=0, top=0.86)
+plt.savefig(
+    os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_GP_%s_in_%s_bands_Ho2021.pdf' % (SNTYPE, len(bands)),
+    bbox_inches='tight')
