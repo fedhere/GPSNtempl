@@ -28,8 +28,19 @@ from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline,spl
 # =============================================================================
 # sys.path.insert(0, os.path.realpath(os.getenv("SESNPATH")+ ("SESNCfAlib")))
 
+try:
+    os.environ['SESNPATH']
+    os.environ['SESNCFAlib']
 
-import SESNCfAlib.snclasses as snstuff
+except KeyError:
+    print("must set environmental variable SESNPATH and SESNCfAlib")
+    sys.exit()
+
+cmd_folder = os.getenv("SESNCFAlib")
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+
+import snclasses as snstuff
 # import templutils as templutils
 # import utils as snutils
 # import fitutils as fitutils
