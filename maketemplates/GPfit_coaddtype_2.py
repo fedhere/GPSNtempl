@@ -40,7 +40,7 @@ FNIR = True
 SNTYPE = 'Ic-bl'
 
 # pl.ion()
-readgood = pd.read_csv("goodGPs2_fit_selection3.csv", header=None)
+readgood = pd.read_csv("goodGPs2_fit_selection3.csv", header=None, usecols=[0, 1, 2, 3])
 # print('readgood is ' ,readgood)
 # print readgood
 # sys.exit()
@@ -195,7 +195,7 @@ if __name__ == '__main__':
         thissn.getphot()
         thissn.setphase()
         thissn.sortlc()
-        thissn.printsn()
+        # thissn.printsn()
 
         # check that the SN has ANY data points in all bands
         if np.array([n for n in thissn.filters.values()]).sum() == 0:
@@ -318,7 +318,7 @@ if __name__ == '__main__':
             #     up_lim = 20
             #     t_sn = t[(t >= low_lim) * (t <= up_lim)]
 
-            pklf = "outputs/GPfit%s_%s.pkl" % (sn, b + 'p' if b in ['u', 'r', 'i']
+            pklf = "./../../GPSNtempl_output/gpFit_single_SN/GPfit%s_%s.pkl" % (sn, b + 'p' if b in ['u', 'r', 'i']
             else b)
             if not os.path.isfile(pklf):
                 print("missing file ", pklf)
@@ -514,6 +514,7 @@ if __name__ == '__main__':
                     musShifted[i][j] = (mus[i][j]) - yoffset
                     stdsShifted[i][j] = stds[i][j]
 
+            print(musShifted)
             axv2[b][0].plot(t, musShifted[i][j], lw=2,
                             label=thissn.snnameshort, alpha=0.5,
                             color=clrs[i])
@@ -824,9 +825,9 @@ if __name__ == '__main__':
             axv1[b][0].grid(True)
             axv1[b][1].grid(True)
             axv1[b][2].grid(True)
-            # pkl.dump(thisfit,
-            #          open("outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
-            #          else b), "wb"))
+            pkl.dump(thisfit,
+                     open("outputs/GPs_2022/GPalltemplfit_%s_%s_rm_07rz.pkl" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
+                     else b), "wb"))
 
             # pl.figure()
 
@@ -887,4 +888,4 @@ if __name__ == '__main__':
                 else b))
             # os.system("pdfcrop outputs/GPalltemplfit_%s_%s_V1.pdf /Users/fbianco/science/Dropbox/papers/SESNtemplates.working/figs/GPalltemplfit_%s_%s_V1.pdf"%(SNTYPE,bb,SNTYPE,bb))
         else:
-            print('No Rolling Median was found for the GP templates in band ', b)
+            print('No Rolling Median was found for the GP templates of subtype' , SNTYPE, ' in band ', b)

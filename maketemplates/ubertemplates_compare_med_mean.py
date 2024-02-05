@@ -736,26 +736,31 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         # Panel 3: Plotting the median and average template
         # The peak of the average templates is manually set to zero to align the templates vertically.
 
-        axs[0].plot(phs, med_, 'k-', lw=2, label=' Median')
+        med_color = '#35618f'
+        mean_color = '#5c0d47'
+
+        axs[0].plot(phs, med_, color = med_color, lw=4, label=' Median')
         axs[0].fill_between(phs,
                             pc25_,
                             pc75_,
-                            color='k', alpha=0.5)
+                            color = med_color, alpha=0.5)
 
-        axs[1].plot(phs[std > 0], wmu[std > 0], 'k-', lw=2, label='Weighted average')
+        axs[1].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
         axs[1].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
                             wmu[std > 0] + wgstd[std > 0],
-                            color='k', alpha=0.5)
+                            color = mean_color, alpha=0.5)
 
-        axs[2].plot(phs, med_, 'r-', lw=2, label='Median')
-        axs[2].plot(phs[std > 0], wmu[std > 0], 'k-', lw=2, label='Weighted average')
+        axs[2].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
+
+        axs[2].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
+                            wmu[std > 0] + wgstd[std > 0],
+                            color = mean_color, alpha=0.5)
+        axs[2].plot(phs, med_, color = med_color, lw=4, label='Median')
         axs[2].fill_between(phs,
                             pc25_,
                             pc75_,
-                            color='r', alpha=0.5)
-        axs[2].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
-                            wmu[std > 0] + wgstd[std > 0],
-                            color='k', alpha=0.5)
+                            color=med_color, alpha=0.5)
+
 
         handles0, labels0 = axs[0].get_legend_handles_labels()
         handles1, labels1 = axs[1].get_legend_handles_labels()
@@ -772,19 +777,26 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         artistother = pl.Line2D((0, 1), (0, 0), color=colorTypes['other'],
                                 marker='o', linestyle='')
 
-        axs[0].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
-                      [handle for handle in handles0],
-                      ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
-                      [label for label in labels0],
-                      framealpha=0.5, frameon=False, handletextpad=0.1,
-                      columnspacing=0.6,  ncol=4, prop={'size': 40})
-        axs[1].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
-                      [handle for handle in handles1],
-                      ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
-                      [label for label in labels1],
-                      framealpha=0.5, frameon=False, handletextpad=0.1,
-                      columnspacing=0.6, ncol=4, prop={'size': 40})
-        axs[2].legend(frameon=False, prop={'size': 40})
+        # axs[0].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
+        #               [handle for handle in handles0],
+        #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
+        #               [label for label in labels0],
+        #               framealpha=0.5, frameon=False, handletextpad=0.1,
+        #               columnspacing=0.6,  ncol=4, prop={'size': 40})
+        # axs[1].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
+        #               [handle for handle in handles1],
+        #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
+        #               [label for label in labels1],
+        #               framealpha=0.5, frameon=False, handletextpad=0.1,
+        #               columnspacing=0.6, ncol=4, prop={'size': 40})
+        # axs[2].legend(frameon=False, prop={'size': 40})
+
+        handles = [artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +\
+                      [handle for handle in handles0]+[handle for handle in handles1]
+        labels = ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +\
+                      [label for label in labels0]+[label for label in labels1]
+
+        fig.legend(handles, labels, loc='upper center', ncol=4, prop={'size': 40})
 
         max_axs0 = [maxy, np.max(med[std > 0] + pc75[std > 0])]
         max_axs1 = [maxy, np.max(wmu[std > 0] + wgstd[std > 0])]
@@ -794,17 +806,17 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         min_axs1 = [miny, np.min(wmu[std > 0] - wgstd[std > 0])]
         min_axs2 = [np.min(wmu[std > 0] - wgstd[std > 0]), np.min(med[std > 0] - pc25[std > 0])]
 
-
-
-        axs[0].set_ylim(np.nanmax(max_axs0), np.nanmin(min_axs0))
-        axs[1].set_ylim(np.nanmax(max_axs1), np.nanmin(min_axs1))
-        axs[2].set_ylim(np.nanmax(max_axs2), np.nanmin(min_axs2))
+        #
+        #
+        # axs[0].set_ylim(np.nanmax(max_axs0), np.nanmin(min_axs0))
+        # axs[1].set_ylim(np.nanmax(max_axs1), np.nanmin(min_axs1))
+        # axs[2].set_ylim(np.nanmax(max_axs2), np.nanmin(min_axs2))
         axs[0].set_xlim(-30, 100)
         axs[1].set_xlim(-30, 100)
         axs[2].set_xlim(-30, 100)
-        axs[0].set_ylim(4, -3)
-        axs[1].set_ylim(4, -3)
-        axs[2].set_ylim(4, -3)
+        axs[0].set_ylim(4, -1)
+        axs[1].set_ylim(4, -1)
+        axs[2].set_ylim(4, -1)
         axs[2].set_xlabel("phase (days since Vmax)", fontsize=50)
         fig.text(0.06, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=50)
 
@@ -814,8 +826,8 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
             ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=4, width=2)
             ax.xaxis.set_minor_locator(AutoMinorLocator(4))
             ax.yaxis.set_minor_locator(AutoMinorLocator(4))
-            ax.set_yticks([-2, -1, 0, 1, 2, 3])
-            ax.set_yticklabels(['-2', '-1', '0', '1', '2', '3'])
+            ax.set_yticks([ -1, 0, 1, 2, 3])
+            ax.set_yticklabels([ '-1', '0', '1', '2', '3'])
             ax.set_xticks([-20, 0, 20, 40, 60, 80, 100])
             ax.set_xticklabels(['-20', '0', '20', '40', '60', '80', ''])
             ax.axvline(0, color = 'grey', alpha = 0.5)
@@ -823,7 +835,7 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         plt.setp(axs[0].get_xticklabels(), visible=False)
         plt.setp(axs[1].get_xticklabels(), visible=False)
         plt.subplots_adjust(hspace=.0)
-        fig.savefig("ubertemplates/UberTemplate_%s_types.pdf" % \
+        fig.savefig("outputs/UberTemplate_%s_types.pdf" % \
                     (b + 'p' if b in ['u', 'r', 'i']
                      else b), bbox_inches='tight')
 
@@ -916,7 +928,7 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
 
         templates, templates['spl_mu'], templates['spl_med'] = wSmoothAverage(templates, 3)
 
-        pkl.dump(templates, open("ubertemplates/UberTemplate_%s.pkl" % \
+        pkl.dump(templates, open("outputs/UberTemplate_%s.pkl" % \
                                  (b + 'p' if b in ['u', 'r', 'i']
                                   else b), 'wb'))
 

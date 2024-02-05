@@ -241,7 +241,7 @@ for b in b_:
         if i == 0:
 
             np.concatenate(ax)[b].errorbar(x - t_peak, ymin - m, yerr=merr, fmt='o', \
-                                           linewidth=3, color='k',
+                                           linewidth=3, color='k', alpha = 0.5,
                                            label=r'$\mathrm{Plasticc } \; \mathrm{ light curves}$')
         #             np.concatenate(ax)[b].plot(t_new - new_t_peak,\
         #                 new_y_peak - m_func,\
@@ -249,7 +249,7 @@ for b in b_:
 
         else:
             np.concatenate(ax)[b].errorbar(x - t_peak, ymin - m, yerr=merr, fmt='o', \
-                                           linewidth=3, color='k'
+                                           linewidth=3, color='k', alpha = 0.5
                                            )
     #             np.concatenate(ax)[b].plot(t_new - new_t_peak,\
     #                 new_y_peak - m_func,\
