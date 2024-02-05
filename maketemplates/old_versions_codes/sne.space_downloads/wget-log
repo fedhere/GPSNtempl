@@ -1,6 +1,0 @@
---2017-07-15 12:53:11--  https://sne.space/astrocats/astrocats/supernovae/output/json/SN2009je
-Resolving sne.space... 2600:3c03::f03c:91ff:fe70:5df3, 66.228.36.122
-Connecting to sne.space|2600:3c03::f03c:91ff:fe70:5df3|:443... connected.
-HTTP request sent, awaiting response... 404 ‘wget-log’
-2017-07-15 12:54:16 ERROR 404: Not Found.
-
