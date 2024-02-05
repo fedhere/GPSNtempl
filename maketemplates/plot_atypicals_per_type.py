@@ -42,16 +42,19 @@ import templutils as templutils
 su = templutils.setupvars()
 coffset = su.coffset
 
+# We are plotting the atypical plots in these four bands:
 bands = ['B', 'V', 'R', 'I']
 
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
+        # It takes as an argument the subtype. If none given, subtype Ib is plotted
         if sys.argv[1] in ['Ib', 'IIb', 'Ic', 'Ic-bl', 'Ibn']:
             SNTYPE = sys.argv[1]
         else:
             SNTYPE = 'Ib'
         if len(sys.argv) > 2:
+            # Here, individual atypical SN names are given. This is REQUIRED.
             if sys.argv[2].startswith('SN='):
                 atypicals = sys.argv[2].split('=')[1].split(',')
                 NUM_atypicals = len(atypicals)
@@ -59,10 +62,13 @@ if __name__ == '__main__':
                 print('Select individual SESN to plot by typing: SN=SN1,SN2,SN3,...')
                 sys.exit()
             if len(sys.argv) > 3:
+                # Here, individual preferred bands are given.
                 if sys.argv[3].startswith('b='):
                     bands = sys.argv[3].split('=')[1].split(',')
 
 tmpl = {}
+
+# Reading the GP templates in each of the given bands
 for bb in bands:
 
     tmpl[bb] = {}
@@ -79,21 +85,23 @@ for bb in bands:
         continue
 
     tmpl[bb][SNTYPE] = tmpl_
-
+#'#f7790a', '#36ff17','#0a4bff', '#f02244',
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = sns.color_palette(cc.glasbey, n_colors=NUM_atypicals)
+colors_atypicals = [  '#755405', '#07b368', '#ff24e2', '#fff024', '#14aae0', '#660944']
+#sns.color_palette(cc.glasbey, n_colors=NUM_atypicals)
 # su.allsne_colormaps(NUM_atypicals)
 # colors_atypicals = su.allsne_colors
 
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-all_atypicals = {}
+atypicals_colors = {} # A set of colors for plotting the atypicals.
 handles = []
 for i, n in enumerate(atypicals):
-    all_atypicals[n] = colors_atypicals[i]
+    atypicals_colors[n] = colors_atypicals[i]
 
-atypicals_phot = {}
+
+atypicals_phot = {} # All atypical photometry will be saved here
 
 for b in bands:
     atypicals_phot[b] = {'x': [], 'y': [], 'yerr': [], 'name': [], 'subtype': []}
@@ -102,7 +110,7 @@ for i, sn in enumerate(atypicals):
     print(sn)
 
     #     meansmooth = lambda x : -tmpl['spl_med'](x) + tmpl['spl_med'](0)
-
+    # Each atypical photometry is read here
     thissn = snstuff.mysn(sn, addlit=True)
     thissn.readinfofileall(verbose=False, earliest=False, loose=True)
     thissn.printsn()
@@ -112,27 +120,31 @@ for i, sn in enumerate(atypicals):
     thissn.setphase()
     thissn.sortlc()
     if np.isnan(thissn.Vmax):
+        # If there are no known Vmax for that SN, setVmaxFromFile function will look at peaks in other 
+        # bands in a given input file and converts them to Vmax.
         input_file = pd.read_csv(os.getenv("SESNCFAlib") + \
                                  "/SESNessentials_large_table.csv", encoding="ISO-8859-1")
         thissn.setVmaxFromFile(input_file, verbose=False, earliest=False,
                                loose=True, D11=False,
                                bigfile=False, quiet=False)
 
-    # print(thissn.filters.values)
-    handles.append(mpatches.Patch(color=colors_atypicals[i], label=sn + ', ' + thissn.type))
+    # Manually giving the handles color
+    # if len(thissn.type)>5:
+    #     # print('yess',thissn.type)
+    #     handles.append(mpatches.Patch(color=colors_atypicals[i], label=sn + ', ' + thissn.type))
+    # else:
+    # handles.append(mpatches.Patch(color=colors_atypicals[i], label=sn+ ', ' + thissn.type))
+
+
     for b in bands:
 
         # thissn.getmagmax(band=b, forceredo=True)
 
         if thissn.filters[b] != 0:
 
+
+            # If time is not in MJD, fix it!
             xmin = thissn.photometry[b]['mjd'].min()
-
-            # if np.isnan(thissn.maxmags[b]['epoch']):
-            #     t_max = thissn.Vmax + coffset[b]
-            # else:
-            #     t_max = thissn.maxmags[b]['epoch']
-
             t_max = thissn.Vmax
 
             if xmin - t_max < -1000:
@@ -146,14 +158,18 @@ for i, sn in enumerate(atypicals):
             y = thissn.photometry[b]['mag']
 
             if np.isnan(t_max):
+                # If no Vmax was found, read in the GP fit of that light curve
                 y = -y
                 pklf = os.getenv("SESNPATH") + "./../GPSNtempl_output/outputs/GPs_2022/GPfit%s_%s.pkl" % (
                     sn, b + 'p' if b in ['u', 'r', 'i']
                     else b)
                 if not os.path.isfile(pklf):
+                    # If the SN has no GP fit:
+                        # First take the minimum y as the peak
+                        # If t_ymin>5, it means the peak is not covered, so skip that band.
+                        # If t_ymin<-5, it might be a pre-shock peak chosen, look for a peak
+                        # in [-5,5] interval
                     print("missing GP file ", pklf)
-                    # raw_input()
-                    #
                     min_y = np.min(y)
                     if x[y == min_y][0] > 5:
                         print('5 Removed sn', sn)
@@ -164,6 +180,7 @@ for i, sn in enumerate(atypicals):
                     # continue
                     pass
 
+                # If the SN has GP fit, take the peak of that as the peak if 
                 ygp, gp, tmplm = pkl.load(open(pklf, "rb"))
                 if x[0] > 0:
                     delta_y = y[0] + tmplm(x)[0]
@@ -178,9 +195,9 @@ for i, sn in enumerate(atypicals):
                     y = y - y_min
             else:
                 if not isinstance(x[y == min(y)], float):
-                    xmin = x[y == min(y)][0]
+                    xmin = x[y == np.nanmin(y)][0]
                 else:
-                    xmin = x[y == min(y)]
+                    xmin = x[y == np.nanmin(y)]
                 if xmin > 5:
                     continue
                 if xmin < -5:
@@ -279,36 +296,45 @@ for i, b in enumerate(bands):
 
             if sn_temp == 0:
 
+                if len(atypicals_phot[b]['subtype'][j])>5:
+                    label_temp = str(atypicals_phot[b]['name'][j])+ ', ' +\
+                                             atypicals_phot[b]['subtype'][j]
+                else:
+                    label_temp = atypicals_phot[b]['name'][j]
+
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                          color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
-                                          color=all_atypicals[atypicals_phot[b]['name'][j]],
-                                          label=str(atypicals_phot[b]['name'][j]) + ', ' + str(
-                                              atypicals_phot[b]['subtype'][j]))
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]],
+                                          label=label_temp)
                 sn_temp = sn_temp + 1
             else:
 
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                          color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
-                                          color=all_atypicals[atypicals_phot[b]['name'][j]])
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]])
         else:
+
+            if len(atypicals_phot[b]['subtype'][j])>5:
+                label_temp = str(atypicals_phot[b]['name'][j])+ ', ' +\
+                                             atypicals_phot[b]['subtype'][j]
+            else:
+                label_temp = str(atypicals_phot[b]['name'][j])
 
             axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                      color=all_atypicals[atypicals_phot[b]['name'][j]], linewidth=3)
+                                      color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
             axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
-                                      color=all_atypicals[atypicals_phot[b]['name'][j]],
-                                      label=str(atypicals_phot[b]['name'][j]) + ', ' + str(
-                                          atypicals_phot[b]['subtype'][j]))
+                                      color=atypicals_colors[atypicals_phot[b]['name'][j]],
+                                      label=label_temp)
 
-    # if len(tmpl[b][SNTYPE]) == 0:
-    #     continue
+
     axs.flatten()[index].plot(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingMedian'],
                           color='k', linewidth=6)
     axs.flatten()[index].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
@@ -347,15 +373,17 @@ if len(labels) < 6:
 else:
     if len(labels) % 5 == 0:
         legend_col_num = 5
-    if len(labels) % 4 == 0:
+    elif len(labels) % 4 == 0:
         legend_col_num = 4
-    if len(labels) % 3 == 0:
+    elif len(labels) % 3 == 0:
+        legend_col_num = 3
+    else:
         legend_col_num = 3
 
 fig.legend(hl[1], hl[0], loc='upper center', ncol=legend_col_num, prop={'size': legsize})
 
-frame1 = fig.text(0.09, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
-frame2 = fig.text(0.45, 0.05, 'Phase (days)', va='center', size=labelsize)
+frame1 = fig.text(0.08, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
+frame2 = fig.text(0.45, 0.02, 'Phase (days)', va='center', size=labelsize)
 # Artist.set_visible(frame1, False)
 # Artist.set_visible(frame2, False)
 
@@ -365,7 +393,7 @@ for ax in axs.flatten():
     ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=7, width=2)
     ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
-plt.subplots_adjust(hspace=0, wspace=0, top=0.86)
+plt.subplots_adjust(hspace=0, wspace=0, top=0.8)
 plt.savefig(
-    os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_GP_%s_in_%s_bands_Ho2021.pdf' % (SNTYPE, len(bands)),
+    os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_GP_%s_in_%s_bands_Anna_Ho.pdf' % (SNTYPE, len(bands)),
     bbox_inches='tight')
