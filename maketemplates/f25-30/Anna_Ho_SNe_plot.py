@@ -56,7 +56,7 @@ for bb in bands:
         # if bb in ['u', 'i', 'r']:
         #     bb = bb + 'p'
 
-        path = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
+        path = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
         tmpl_ = pkl.load(open(path, "rb"))
 
         if np.nansum(tmpl_['rollingMedian']) == 0:
@@ -68,9 +68,11 @@ for bb in bands:
 
 
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = [ '#f7790a', '#36ff17','#0a4bff',
-                     '#f02244', '#755405', '#07b368', 
-                     '#ff24e2', '#fff024', '#14aae0', '#660944']
+colors_atypicals = ["#3588d1", "#38485e", "#589e7e", "#c86949", 
+                    "#881448", "#e8250c", "#621da6", "#cf80dd", "#0b522e", "#fe5cde"]
+# [ '#f7790a', '#36ff17','#0a4bff',
+                     # '#f02244', '#755405', '#07b368', 
+                     # '#ff24e2', '#fff024', '#14aae0', '#660944']
 
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
@@ -296,5 +298,5 @@ for ax in axs.flatten():
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
 plt.subplots_adjust(hspace=0, wspace=0, top=0.94)
 plt.savefig(
-    os.getenv("SESNPATH") + 'maketemplates/outputs/all_Anna_Ho.pdf',
+    os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/all_Anna_Ho.pdf',
     bbox_inches='tight')

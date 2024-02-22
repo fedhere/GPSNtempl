@@ -58,16 +58,23 @@ if __name__ == '__main__':
             if sys.argv[2].startswith('SN='):
                 atypicals = sys.argv[2].split('=')[1].split(',')
                 NUM_atypicals = len(atypicals)
+            if sys.argv[3].startswith('b='):
+                bands = sys.argv[3].split('=')[1].split(',')
+                next_arg = 4
+            else:
+                next_arg = 3
+
+            if sys.argv[next_arg].startswith('top='):
+                top_num = sys.argv[next_arg].split('=')[1]
+                top_num = float(top_num)
+            if sys.argv[next_arg+1].startswith('name_save='):
+                name_save = sys.argv[next_arg+1].split('=')[1]
+                # name_save = str(name_save)
             else:
                 print('Select individual SESN to plot by typing: SN=SN1,SN2,SN3,...')
                 sys.exit()
-            if len(sys.argv) > 3:
-                # Here, individual preferred bands are given.
-                if sys.argv[3].startswith('b='):
-                    bands = sys.argv[3].split('=')[1].split(',')
 
 tmpl = {}
-
 # Reading the GP templates in each of the given bands
 for bb in bands:
 
@@ -77,7 +84,7 @@ for bb in bands:
     # if bb in ['u', 'i', 'r']:
     #     bb = bb + 'p'
 
-    path = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
+    path = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
     tmpl_ = pkl.load(open(path, "rb"))
 
     if np.nansum(tmpl_['rollingMedian']) == 0:
@@ -85,9 +92,15 @@ for bb in bands:
         continue
 
     tmpl[bb][SNTYPE] = tmpl_
-#'#f7790a', '#36ff17','#0a4bff', '#f02244',
+#'#f7790a', 'DarkGreen','SteelBlue', '#f02244',
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = [  '#755405', '#07b368', '#ff24e2', '#fff024', '#14aae0', '#660944']
+colors_atypicals = ["#3588d1", "#38485e", "#589e7e", "#c86949", 
+                    "#881448", "#e8250c", "#621da6", "#cf80dd", "#0b522e", "#fe5cde"]
+# ['#f7790a', 'DarkGreen','SteelBlue', '#f02244', 
+                    # '#755405', '#07b368', '#ff24e2', '#fff024', '#14aae0', '#660944']
+# 
+# ['#ff0505', '#038041', '#ff8585', '#bf6204', '#0582ff',
+#                     '#bfbf63', '#7f4242', '#8205ff','#222280', '#ffff05']
 #sns.color_palette(cc.glasbey, n_colors=NUM_atypicals)
 # su.allsne_colormaps(NUM_atypicals)
 # colors_atypicals = su.allsne_colors
@@ -140,7 +153,7 @@ for i, sn in enumerate(atypicals):
 
         # thissn.getmagmax(band=b, forceredo=True)
 
-        if thissn.filters[b] != 0:
+        if thissn.filters[b] >3:
 
 
             # If time is not in MJD, fix it!
@@ -156,6 +169,8 @@ for i, sn in enumerate(atypicals):
                 x = thissn.photometry[b]['mjd'] - t_max
 
             y = thissn.photometry[b]['mag']
+
+
 
             if np.isnan(t_max):
                 # If no Vmax was found, read in the GP fit of that light curve
@@ -198,8 +213,9 @@ for i, sn in enumerate(atypicals):
                     xmin = x[y == np.nanmin(y)][0]
                 else:
                     xmin = x[y == np.nanmin(y)]
-                if xmin > 5:
-                    continue
+                # if xmin > 5:
+
+                #     continue
                 if xmin < -5:
                     # y = y[np.abs(x) == np.min(np.abs(x))] -y
                     try:
@@ -213,11 +229,14 @@ for i, sn in enumerate(atypicals):
                 y = min_y - y
 
             yerr = thissn.photometry[b]['dmag']
+                    
 
             if sn == 'OGLE-2012-SN-006' and (b == 'B' or b == 'R'):
                 continue
 
             if sn == 'SN2007ke' and (b == 'V'):
+                continue
+            if sn == 'SN2017ein' and (b == 'I'):
                 continue
             if sn == 'SN2007ke' and (b == 'B'):
                 continue
@@ -256,6 +275,7 @@ for i, sn in enumerate(atypicals):
                 atypicals_phot[b]['yerr'].append(yerr)
                 atypicals_phot[b]['name'].append(sn)
                 atypicals_phot[b]['subtype'].append(thissn.type)
+            
 
 if len(bands) == 1:
     fig, axs = plt.figure(15, 10)
@@ -304,7 +324,7 @@ for i, b in enumerate(bands):
 
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=5)
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                           color=atypicals_colors[atypicals_phot[b]['name'][j]],
@@ -314,7 +334,7 @@ for i, b in enumerate(bands):
 
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
+                                          color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=5)
                 axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                           atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                           color=atypicals_colors[atypicals_phot[b]['name'][j]])
@@ -328,7 +348,7 @@ for i, b in enumerate(bands):
 
             axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='.', ls='-',
-                                      color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=3)
+                                      color=atypicals_colors[atypicals_phot[b]['name'][j]], linewidth=5)
             axs.flatten()[index].errorbar(atypicals_phot[b]['x'][j], atypicals_phot[b]['y'][j],
                                       atypicals_phot[b]['yerr'][j], fmt='o', linewidth=5,
                                       color=atypicals_colors[atypicals_phot[b]['name'][j]],
@@ -336,7 +356,7 @@ for i, b in enumerate(bands):
 
 
     axs.flatten()[index].plot(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingMedian'],
-                          color='k', linewidth=6)
+                          color='k', linewidth=8)
     axs.flatten()[index].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
                                   color='grey', alpha=0.5)
     axs.flatten()[index].set_xlim(-25, 105)
@@ -376,7 +396,7 @@ else:
     elif len(labels) % 4 == 0:
         legend_col_num = 4
     elif len(labels) % 3 == 0:
-        legend_col_num = 3
+        legend_col_num = 4
     else:
         legend_col_num = 3
 
@@ -393,7 +413,7 @@ for ax in axs.flatten():
     ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=7, width=2)
     ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
-plt.subplots_adjust(hspace=0, wspace=0, top=0.8)
+plt.subplots_adjust(hspace=0, wspace=0, top=top_num)
 plt.savefig(
-    os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_GP_%s_in_%s_bands_Anna_Ho.pdf' % (SNTYPE, len(bands)),
+    os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/atypicals_GP_%s_in_%s_bands_%s.pdf' % (SNTYPE, len(bands), name_save),
     bbox_inches='tight')

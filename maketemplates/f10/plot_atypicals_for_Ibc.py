@@ -43,7 +43,7 @@ for b in bands:
 
     templates[b] = {}
 
-    path = os.getenv("SESNPATH") + "maketemplates/outputs/ubertemplates/UberTemplate_%s.pkl" %\
+    path = os.getenv("SESNPATH") + "maketemplates/outputs/Ibc_template_files/UberTemplate_%s.pkl" %\
                                     (b + 'p' if b in ['u', 'r', 'i'] else b)
     templates_ = pkl.load(open(path, "rb"))
 
@@ -55,7 +55,8 @@ for b in bands:
 
 #'#f7790a', '#36ff17','#0a4bff', '#f02244',
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = [ '#f7790a', '#36ff17','#0a4bff', '#f02244', '#755405', '#07b368', '#ff24e2', '#fff024', '#14aae0', '#660944']
+colors_atypicals = ["#3588d1", "#38485e", "#589e7e", "#c86949", 
+                    "#881448", "#e8250c", "#621da6", "#cf80dd", "#0b522e", "#fe5cde"]
 #sns.color_palette(cc.glasbey, n_colors=NUM_atypicals)
 # su.allsne_colormaps(NUM_atypicals)
 # colors_atypicals = su.allsne_colors
@@ -287,5 +288,5 @@ for ax in axs.flatten():
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
 plt.subplots_adjust(hspace=0, wspace=0, top=0.89)
 plt.savefig(
-    os.getenv("SESNPATH") + 'maketemplates/outputs/atypicals_Ibc_in_%s_bands.pdf' % (len(bands)),
+    os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/atypicals_Ibc_in_%s_bands.pdf' % (len(bands)),
     bbox_inches='tight')
