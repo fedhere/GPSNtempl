@@ -10,6 +10,8 @@ npm-debug.log
 .eslintcache
 logs/
 .idea/
+.icloud
+.dat
 .ipynb_checkpoints/
 __pycache__/
 *.log
