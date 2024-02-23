@@ -18,12 +18,12 @@ def testGauss(x, y, mask, s, npts, sig=5):
 	b = gaussian(39, sig)
 	#ga = filtfilt(b/b.sum(), [1.0], y)
 	ga = filters.convolve1d(y[~mask], b/b.sum())
-        print (y)
-        print (len(ga), sum(~mask), len(mask), len(y))
-        yy = y
-        yy[~mask] = ga
+	print (y)
+	print (len(ga), sum(~mask), len(mask), len(y))
+	yy = y
+	yy[~mask] = ga
 	print (yy)
-        #plt.plot(x, ga)
+		#plt.plot(x, ga)
 	#print ("gaerr", ssqe(ga, s, npts))
 	return yy
 
@@ -31,19 +31,19 @@ def testButterworth(nyf, x, y, s, npts):
 	b, a = butter(4, 1.5/nyf)
 	fl = filtfilt(b, a, y)
 	plt.plot(x,fl)
-	print "flerr", ssqe(fl, s, npts)
+	print ("flerr", ssqe(fl, s, npts))
 	return fl
 
 def testWiener(x, y, s, npts):
 	wi = wiener(y, mysize=29, noise=0.5)
 	plt.plot(x,wi)
-	print "wieerr", ssqe(wi, s, npts)
+	print ("wieerr", ssqe(wi, s, npts))
 	return wi
 
 def testSpline(x, y, s, npts):
 	sp = UnivariateSpline(x, y, s=240)
 	plt.plot(x,sp(x))
-	print "splerr", ssqe(sp(x), s, npts)
+	print ("splerr", ssqe(sp(x), s, npts))
 	return sp(x)
 
 def plotPowerSpectrum(y, w):
