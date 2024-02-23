@@ -32,7 +32,8 @@ color_bands = {'U':'k','up':'k','B':'#0066cc','V':'#47b56c','R':'#b20000','I':'m
 plot_vmax = False
 allbands = False
 allsne = pd.read_csv(os.getenv("SESNCFAlib") +
-                             "/SESNessentials.csv")['SNname'].values
+                             "/SESNessentials.csv", 
+                             encoding="ISO-8859-1")['SNname'].values
 
 
 if __name__ == '__main__':
@@ -168,4 +169,5 @@ if __name__ == '__main__':
             ax.set_xlabel('JD - 2455000.5 (days)', size=50)
             ax.set_ylabel('Magnitude', size=50)
 
-            plt.savefig("outputs/Plot_lc_%s_%s.png" % (sn, b))
+            plt.savefig(os.getenv("SESNPATH") + 
+                "maketemplates/outputs/Plot_lc_%s_%s.png" % (sn, b))
