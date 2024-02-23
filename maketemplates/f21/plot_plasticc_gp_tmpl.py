@@ -72,7 +72,7 @@ for bb in bands:
         tmpl[bb][SNTYPE] = {}
 
         try:
-            path = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
+            path = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (SNTYPE, bb)
             tmpl_ = pkl.load(open(path, "rb"))
         except:
             continue
@@ -85,8 +85,8 @@ for bb in bands:
 
 
 # Read in Plasticc train set
-df1 = pd.read_csv(os.getenv("SESNPATH") + 'maketemplates/Plasticc_I/plasticc_train_lightcurves.csv')
-df2 = pd.read_csv(os.getenv("SESNPATH") + 'maketemplates/Plasticc_I/plasticc_train_metadata.csv')
+df1 = pd.read_csv(os.getenv("SESNPATH") + 'maketemplates/Plasticc/plasticc_train_lightcurves.csv')
+df2 = pd.read_csv(os.getenv("SESNPATH") + 'maketemplates/Plasticc/plasticc_train_metadata.csv')
 
 
 # Select SESNe (code 62) and redshifts<0.2
@@ -165,8 +165,8 @@ bb = ['u', 'g', 'r', 'i']
 ID = 26842116
 b_ = [0, 1, 2, 3]
 
-# plt.rcParams['font.family'] = 'serif'
-# plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
 
 # u, g, r, i
@@ -176,9 +176,9 @@ max_g = [[], []]
 max_r = [[], []]
 max_i = [[], []]
 
-plt.rcParams['text.usetex'] = True
-plt.rcParams[
-    'text.latex.preamble'] = r'\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother'
+# plt.rcParams['text.usetex'] = True
+# plt.rcParams[
+#     'text.latex.preamble'] = r'\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother'
 
 # print(band_sntypes)
 fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(25, 25))
@@ -241,15 +241,15 @@ for b in b_:
         if i == 0:
 
             np.concatenate(ax)[b].errorbar(x - t_peak, ymin - m, yerr=merr, fmt='o', \
-                                           linewidth=3, color='k', alpha = 0.5,
-                                           label=r'$\mathrm{Plasticc } \; \mathrm{ light curves}$')
+                                           linewidth=3, color='k', alpha = 0.1,
+                                           label='PLAsTiCC light curves')
         #             np.concatenate(ax)[b].plot(t_new - new_t_peak,\
         #                 new_y_peak - m_func,\
         #                 '-', linewidth = 0.1, color = 'r', alpha = 0.5, label = 'VL fit')
 
         else:
             np.concatenate(ax)[b].errorbar(x - t_peak, ymin - m, yerr=merr, fmt='o', \
-                                           linewidth=3, color='k', alpha = 0.5
+                                           linewidth=3, color='k', alpha = 0.1
                                            )
     #             np.concatenate(ax)[b].plot(t_new - new_t_peak,\
     #                 new_y_peak - m_func,\
@@ -303,7 +303,7 @@ for b in b_:
                                           right=True, top=True, size=7, labelsize=25, width=2)
 
     np.concatenate(ax)[b].text(0.93, 0.92, bb[b], transform=np.concatenate(ax)[b].transAxes, \
-                               weight='bold', size=50, color='k')
+                               size=50, color='k')
 
 handles, labels = np.concatenate(ax)[2].get_legend_handles_labels()
 fig.legend(handles, labels, loc='upper center', ncol=3, prop={'size': 35})
@@ -316,10 +316,10 @@ np.concatenate(ax)[3].set_xticklabels(['', '-20','-10','0', '10', '20', '30', '4
 
 np.concatenate(ax)[0].set_xlim(-25, 55)
 np.concatenate(ax)[0].set_ylim(-4, 0.9)
-plt.subplots_adjust(hspace=.03, wspace=0.03, top=0.88, left=0.1, bottom=0.1)
+plt.subplots_adjust(hspace=.03, wspace=0.03, top=0.91, left=0.1, bottom=0.1)
 
 fig.text(0.5, 0.04, 'Phase (days)', ha='center', size=40)
 fig.text(0.04, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size=40)
 
-plt.savefig(os.getenv("SESNPATH") + 'maketemplates/Plasticc_I/plasticc_gp_tmpl_ugri_high_SN_peak_covered.pdf', bbox_inches='tight')
+plt.savefig(os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/plasticc_gp_tmpl_ugri_high_SN_peak_covered.pdf', bbox_inches='tight')
 
