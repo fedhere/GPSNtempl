@@ -6,8 +6,8 @@ among and within subtypes, setting the stage for studies aimed at relating the e
 This repository contains the codes, data, plots, tables and results of the paper "Multi-filter UV to NIR Data-driven Light Curve Templates for Stripped Envelope Supernovae" that is submitted to ApJS and the preprint can be found at https://arxiv.org/abs/2405.01672
 
 
-This repo works with utilities which are stored in https://github.com/fedhere/SESNCfAlib and https://github.com/fedhere/fedsastroutils.
-An older version of the repo also exists at https://github.com/fedhere/GPSNtempl.
+This repo works with a few utility codes which are stored in https://github.com/fedhere/SESNCfAlib and https://github.com/fedhere/fedsastroutils.
+
 
 First, set the following environmental variables (assuming bash syntax):
 
@@ -16,7 +16,7 @@ export SESNCFAlib = "path_to_library/SESNCFAlib"
 export UTILPATH = "path_to_randomutils/fedastroutils/"
 
 
-The data is downloaded from the OSNC and is sotered in the "literature" folder in CfA SN data format:
+The data is downloaded from the OSNC and is sotered in the "literature" folder in CfA SN data format. Any added SN photometry should be saved in this format and saved in the "literature" folder. An example of the few first lines of the data files are shown below:
 
 Ul 53734.43359375 nan nan 0.15399999916553497 19.402000427246094
 Ul 53736.46875 nan nan 0.18400000035762787 19.582000732421875
@@ -43,6 +43,11 @@ column 4: ?
 column 5: ERROR
 
 column 6: MAG (Natural system)
+
+
+For reproducing the process of generating the templates for example if new data is added, follow the instructions below:
+
+To be completed soon...
 
 
 
