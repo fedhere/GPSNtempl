@@ -39,11 +39,11 @@ coffset = su.coffset
 
 # We are plotting the atypical plots in these four bands:
 bands = ['g', 'r', 'i']
-atypicals = ['SN2019dge', 'SN2018ghd','SN2020oi', 'SN2018gep', 
-             'SN2020ano', 'SN2020rsc', 'SN2019rta', 
-             'SN2018gjx', 'SN2020ikq', 'SN2020xlt']
+atypicals = ['SN2018ghd', 'SN2019dge','SN2020oi', 'SN2018gep', 
+             'SN2020ano', 'SN2020ikq', 'SN2020rsc', 
+             'SN2018gjx', 'SN2019rta', 'SN2020xlt']
 tmpl = {}
-row_subtypes = ['Ib', 'Ic', 'Ic-bl', 'IIb']
+row_subtypes = ['IIb', 'Ib', 'Ic', 'Ic-bl']
 
 # Reading the GP templates in each of the given bands
 for bb in bands:
@@ -68,8 +68,38 @@ for bb in bands:
 
 
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = ["#3588d1", "#38485e", "#589e7e", "#c86949", 
-                    "#881448", "#e8250c", "#621da6", "#cf80dd", "#0b522e", "#fe5cde"]
+colors_atypicals = [
+                    # "#e51f00",
+                    # "#00c2f2",
+                    # "#589e7e", #light green
+                    # "#cf4343", #medium red
+                    # "#ffaa00", 
+                    # "#59b359", 
+                    # "#c48747", #dirty  orange
+                    # "#99ba4e", #very bright green
+                    # "#cf4343", #medium red
+                    # "#dcb643", #dark yellow
+                    # "#c77a9d", #light purple
+                    # "#117442", #dark green
+                    # "#5990da", #very light blue,
+                    # "#6f34a9", #violet
+                    # "#e51f00", 
+                    # "#ffaa00", 
+                    # "#59b359", 
+                    # "#00c2f2", 
+                    # "#f2b6de",
+                    # "#502db3"
+                    "#e41a1c",
+                    "#377eb8",
+                    "#4daf4a",
+                    "#984ea3",
+                    "#e41a1c",
+                    "#377eb8",
+                    "#4daf4a",
+                    "#984ea3",
+                    "#ff7f00",
+                    "#dedd17", 
+                    ]
 # [ '#f7790a', '#36ff17','#0a4bff',
                      # '#f02244', '#755405', '#07b368', 
                      # '#ff24e2', '#fff024', '#14aae0', '#660944']
@@ -215,7 +245,7 @@ fig, axs = plt.subplots(4, 3, figsize=(17*3, 15*4),
                         sharey=True, sharex=True)
 
 
-legsize = 55
+legsize = 50
 labelsize = 70
 plt.subplots_adjust(hspace=.04, wspace=0.04, bottom=0.08)
 
@@ -225,11 +255,11 @@ n_panels = len(axs.flatten())
 # handles, labels = [[]]*len(atypicals), [[]]*len(atypicals)
 
 for k in range(4):
-        
+    handles = []
+    labels = []
+    hl = [[], []]
     SNTYPE = row_subtypes[k]
-    for i, b in enumerate(bands):
-        0+0*1
-    
+    for i, b in enumerate(bands):    
 
 
         for j in range(len(atypicals_phot[b]['x'])):
@@ -258,34 +288,35 @@ for k in range(4):
             axs[k, i].set_ylim(-4.5, 1)
         axs[k, i].text(0.8, 0.9, b + ', ' + SNTYPE, transform=axs[k, i].transAxes, size=60)
 
-handles = []
-for i in range(len(axs.flatten())):
-    handles += (axs.flatten()[i]).get_legend_handles_labels()[0]
+        
+    for i in range(len(axs[k, :].flatten())):
+        handles += (axs[k, :].flatten()[i]).get_legend_handles_labels()[0]
 
-labels = []
-for i in range(len(axs.flatten())):
-    labels += (axs.flatten()[i]).get_legend_handles_labels()[1]
-if len(bands) == 7:
-    fig.delaxes(axs.flatten()[1])
-hl = [[], []]
+    
+    for i in range(len(axs[k, :].flatten())):
+        labels += (axs[k, :].flatten()[i]).get_legend_handles_labels()[1]
 
-dups = duplicates(labels)
-dups_indx = duplicates_indices(labels)
-for i, label in enumerate(labels):
-    if label in dups:
-        if not np.isnan(dups_indx[label][0]):
+
+    dups = duplicates(labels)
+    dups_indx = duplicates_indices(labels)
+    for i, label in enumerate(labels):
+        if label in dups:
+            if not np.isnan(dups_indx[label][0]):
+                hl[0].append(label)
+                hl[1].append(handles[i])
+                dups_indx[label][0] = np.nan
+            else:
+                continue
+        else:
             hl[0].append(label)
             hl[1].append(handles[i])
-            dups_indx[label][0] = np.nan
-        else:
-            continue
-    else:
-        hl[0].append(label)
-        hl[1].append(handles[i])
 
-legend_col_num = 5
+    legend_col_num = 2
 
-fig.legend(hl[1], hl[0], loc='upper center', ncol=legend_col_num, prop={'size': legsize})
+    axs[k, -1].legend(hl[1], hl[0], 
+                      loc='lower center', 
+                      ncol=legend_col_num, 
+                      prop={'size': legsize})
 
 frame1 = fig.text(0.08, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
 frame2 = fig.text(0.45, 0.05, 'Phase (days)', va='center', size=labelsize)

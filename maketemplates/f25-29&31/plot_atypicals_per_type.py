@@ -20,6 +20,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.patches as mpatches
+from matplotlib.ticker import MaxNLocator
 
 import itertools
 
@@ -94,8 +95,30 @@ for bb in bands:
     tmpl[bb][SNTYPE] = tmpl_
 #'#f7790a', 'DarkGreen','SteelBlue', '#f02244',
 sns.reset_orig()  # get default matplotlib styles back
-colors_atypicals = ["#3588d1", "#38485e", "#589e7e", "#c86949", 
-                    "#881448", "#e8250c", "#621da6", "#cf80dd", "#0b522e", "#fe5cde"]
+colors_atypicals = [
+                    # "#6f34a9", #violet
+                    # "#0d6bbe", #blue
+                    # "#c48747", #dirty  orange
+                    # "#cf4343", #medium red
+                    # "#99ba4e", #very bright green
+                    # "#dcb643", #dark yellow
+                    # "#c77a9d", #light purple
+                    # "#117442", #dark green
+                    # "#91b0da", #very light blue,
+                    # "#589e7e", #light green
+                    # "#e41a1c",
+                    # "#377eb8",
+                    # "#4daf4a",
+                    # "#984ea3",
+                    "#e41a1c",
+                    "#377eb8",
+                    "#4daf4a",
+                    "#984ea3",
+                    "#ff7f00",
+                    "#dedd17", 
+                    "#a65628",
+                    "#f781bf"
+                    ]
 # ['#f7790a', 'DarkGreen','SteelBlue', '#f02244', 
                     # '#755405', '#07b368', '#ff24e2', '#fff024', '#14aae0', '#660944']
 # 
@@ -360,7 +383,7 @@ for i, b in enumerate(bands):
     axs.flatten()[index].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
                                   color='grey', alpha=0.5)
     axs.flatten()[index].set_xlim(-25, 105)
-    axs.flatten()[index].set_ylim(-4.5, .5)
+    axs.flatten()[index].set_ylim(-3, .5)
     axs.flatten()[index].text(0.8, 0.9, b + ', ' + SNTYPE, transform=axs.flatten()[index].transAxes, size=60)
 
 handles = []
@@ -402,7 +425,7 @@ else:
 
 fig.legend(hl[1], hl[0], loc='upper center', ncol=legend_col_num, prop={'size': legsize})
 
-frame1 = fig.text(0.08, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
+frame1 = fig.text(0.07, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=labelsize)
 frame2 = fig.text(0.45, 0.02, 'Phase (days)', va='center', size=labelsize)
 # Artist.set_visible(frame1, False)
 # Artist.set_visible(frame2, False)
@@ -413,6 +436,8 @@ for ax in axs.flatten():
     ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=7, width=2)
     ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+    ax.yaxis.set_major_locator(MaxNLocator(prune='both'))
+
 plt.subplots_adjust(hspace=0, wspace=0, top=top_num)
 plt.savefig(
     os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/atypicals_GP_%s_in_%s_bands_%s.pdf' % (SNTYPE, len(bands), name_save),

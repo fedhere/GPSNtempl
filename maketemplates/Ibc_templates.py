@@ -1,3 +1,15 @@
+'''
+We begin by creating a preliminary template for all SESNe in each band, 
+without differentiating by subtype. 
+1) First, we align the lightcurves in each band by their date of maximum
+brightness.
+2) We create a smoothed, rolling weighted-average template.
+3) We compute a smoothed, rolling median template, with a 5-day rolling
+window.
+
+
+'''
+
 import os
 import pickle as pkl
 import sys
@@ -24,8 +36,9 @@ if cmd_folder not in sys.path:
 
 from savgol import savitzky_golay
 from snclasses import *
+import snclasses as snstuff
 from templutils import *
-from makePhottable import *
+# from makePhottable import *
 from colors import rgb_to_hex
 
 MINEP, MAXEP = -30, 100
@@ -40,7 +53,7 @@ colorTypes = {'IIb': 'FireBrick',
 
 # prepping SN data from scratch
 # (dont do that if you are testing or tuning plots)
-PREP = True
+PREP = False
 # PREP = False
 BOKEHIT = True
 # BOKEHIT = False
@@ -69,7 +82,7 @@ def setcolors(inputSNe):
 
     np.random.seed(666)
     np.random.shuffle(sncolors)
-    pkl.dump(sncolors, open("input/sncolors.pkl", 'wb'))
+    pkl.dump(sncolors, open(os.getenv("SESNPATH") +"maketemplates/input/sncolors.pkl", 'wb'))
     return (sncolors)
 
 
@@ -196,18 +209,6 @@ def plotme2(data, b, axs, sncolors, verbose=False):
                                  min(data['mag'][i][corephases]))[0]
             ymin = data['mag'][i][corephases][magoffset]
 
-        # if the time of the maximum is more than 3 days off from t_max expected for this band
-        # be suspicious and reset it if you can !
-
-        # if np.abs(tmp[np.where(np.abs(tmp) == np.min(np.abs(tmp)))[0]] - snstuff.coffset[b]) > 3:
-        # if np.min(np.abs(tmp)) < 3:
-        #
-        #     # print(data['name'][i], b)
-        #     magoffset = np.where(np.abs(tmp) == np.min(np.abs(tmp)))[0]
-
-        # else:
-
-            # flag = True
 
         sncount += 1
 
@@ -292,7 +293,9 @@ def plotme2(data, b, axs, sncolors, verbose=False):
     if not os.path.exists('outputs'):
         os.mkdir('outputs')
 
-    pkl.dump(sncolordic, open('outputs/colorSNe.pkl', 'wb'))
+    pkl.dump(sncolordic, open(os.getenv("SESNPATH") + 
+                              'maketemplates/outputs/Ibc_template_files/colorSNe.pkl', 
+                              'wb'))
 
     return sourcedata, axs
 
@@ -437,7 +440,7 @@ def preplcvs(inputSNe, workBands):
         tabletex = os.getenv("DB") + "/papers/SESNexplpars/tables/AllPhotUVNIRTable.tex"
         add2table(tmp2, bands, tabletex) '''
 
-    pkl.dump(allSNe, open('input/allSNe.pkl', 'wb'))
+    pkl.dump(allSNe, open(os.getenv("SESNPATH") +'maketemplates/input/allSNe.pkl', 'wb'))
 
     return allSNe
 
@@ -536,12 +539,6 @@ def wAverageByPhase(data, sigma, err=True, phsmax=100, window=10):
                                      3))
     # below checks the polynnomial spline that is removed before smoothing to avoid regression to mean
 
-    # pl.figure()
-    # pl.plot(phs[~np.isnan(med)],wmu[~np.isnan(med)],'.')
-    # pl.plot(data['x'], interpmed(data['x']))
-    # plt.gca().invert_yaxis()
-    # pl.show()
-
     for i, hour in enumerate(phs):
 
         # exponential decay importance with time
@@ -578,24 +575,20 @@ def wAverageByPhase(data, sigma, err=True, phsmax=100, window=10):
                                             (wmu[phsm10] - wgstd[phsm10] - (wmu[phs0] + wgstd[phs0]))[0], \
                                             (wmu[phsm10] + wgstd[phsm10] - (wmu[phs0] - wgstd[phs0]))[0]
 
-    # pl.plot(phs, mu, 'b')
-    # pl.plot(phs, med, 'g')
-    # pl.plot(phs, wmu, 'r')
-    # pl.errorbar(data['x'], data['y'], yerr=data['yerr'],
-    #            color='k', fmt='.')
     return phs, wgmu, wgstd, wmu, med, std, wstd, dm, pc25, pc75, err_ratio, weights_med, weights_mean
 
 
-def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
+def doall(b=su.bands, weights_plot=False, 
+          weights_heatmap=False, compare_plots=False):
     # read in csv file with metadata
     inputSNe = pd.read_csv(os.getenv("SESNCFAlib") +
                            "/SESNessentials.csv", encoding="ISO-8859-1")['SNname'].values  # [:5]
 
-    if os.path.isfile('input/sncolors.pkl'):
+    if os.path.isfile(os.getenv("SESNPATH") +'maketemplates/input/sncolors.pkl'):
         print('reading sncolors')
-        with open('input/sncolors.pkl', 'rb') as f:
+        with open(os.getenv("SESNPATH") +'maketemplates/input/sncolors.pkl', 'rb') as f:
             sncolors = pkl.load(f, encoding="latin")
-        # sncolors =  pkl.load(open('input/sncolors.pkl'))
+        # sncolors =  pkl.load(open('maketemplates/input/sncolors.pkl'))
 
         if not len(sncolors) == len(inputSNe):
             print("redoing SNcolors")
@@ -611,7 +604,9 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
     if PREP:
         allSNe = preplcvs(inputSNe, workBands)
     else:
-        allSNe = pkl.load(open('input/allSNe.pkl'))
+        allSNe = pkl.load(open(os.getenv("SESNPATH") +
+                               'maketemplates/input/allSNe.pkl', 
+                               'rb'))
 
     # plot the photometric datapoints
     for b in workBands:
@@ -657,9 +652,11 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         dataphases = {'x': x, 'y': y, 'yerr': yerr, 'phases': phases,
                       'allSNe': allSNe[b]}
 
-        if not os.path.exists('data'):
-            os.mkdir('data')
-        pkl.dump(dataphases, open('data/alldata_%s.pkl' % b, 'wb'))
+        if PREP:
+            if not os.path.exists('data'):
+                os.mkdir('data')
+            pkl.dump(dataphases, open(os.getenv("SESNPATH") + 
+                'maketemplates/data/alldata_%s.pkl' % b, 'wb'))
 
         print("calculating stats and average ", b)
 
@@ -736,108 +733,105 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
         # Panel 3: Plotting the median and average template
         # The peak of the average templates is manually set to zero to align the templates vertically.
 
-        med_color = '#35618f'
-        mean_color = '#5c0d47'
+        if compare_plots:
+            med_color = '#35618f'
+            mean_color = '#5c0d47'
 
-        axs[0].plot(phs, med_, color = med_color, lw=4, label=' Median')
-        axs[0].fill_between(phs,
-                            pc25_,
-                            pc75_,
-                            color = med_color, alpha=0.5)
+            axs[0].plot(phs, med_, color = med_color, lw=4, label=' Median')
+            axs[0].fill_between(phs,
+                                pc25_,
+                                pc75_,
+                                color = med_color, alpha=0.5)
 
-        axs[1].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
-        axs[1].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
-                            wmu[std > 0] + wgstd[std > 0],
-                            color = mean_color, alpha=0.5)
+            axs[1].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
+            axs[1].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
+                                wmu[std > 0] + wgstd[std > 0],
+                                color = mean_color, alpha=0.5)
 
-        axs[2].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
+            axs[2].plot(phs[std > 0], wmu[std > 0], color = mean_color, lw=4, label='Weighted average')
 
-        axs[2].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
-                            wmu[std > 0] + wgstd[std > 0],
-                            color = mean_color, alpha=0.5)
-        axs[2].plot(phs, med_, color = med_color, lw=4, label='Median')
-        axs[2].fill_between(phs,
-                            pc25_,
-                            pc75_,
-                            color=med_color, alpha=0.5)
+            axs[2].fill_between(phs[std > 0], wmu[std > 0] - wgstd[std > 0],
+                                wmu[std > 0] + wgstd[std > 0],
+                                color = mean_color, alpha=0.5)
+            axs[2].plot(phs, med_, color = med_color, lw=4, label='Median')
+            axs[2].fill_between(phs,
+                                pc25_,
+                                pc75_,
+                                color=med_color, alpha=0.5)
 
 
-        handles0, labels0 = axs[0].get_legend_handles_labels()
-        handles1, labels1 = axs[1].get_legend_handles_labels()
-        artistIIb = pl.Line2D((0, 1), (0, 0), color=colorTypes['IIb'],
-                              marker='o', linestyle='')
-        artistIb = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ib'],
-                             marker='o', linestyle='')
-        artistIc = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ic'],
-                             marker='o', linestyle='')
-        artistIcbl = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ic-bl'],
-                               marker='o', linestyle='')
-        artistIbn = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ibn'],
-                              marker='o', linestyle='')
-        artistother = pl.Line2D((0, 1), (0, 0), color=colorTypes['other'],
-                                marker='o', linestyle='')
+            handles0, labels0 = axs[0].get_legend_handles_labels()
+            handles1, labels1 = axs[1].get_legend_handles_labels()
+            artistIIb = pl.Line2D((0, 1), (0, 0), color=colorTypes['IIb'],
+                                  marker='o', linestyle='')
+            artistIb = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ib'],
+                                 marker='o', linestyle='')
+            artistIc = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ic'],
+                                 marker='o', linestyle='')
+            artistIcbl = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ic-bl'],
+                                   marker='o', linestyle='')
+            artistIbn = pl.Line2D((0, 1), (0, 0), color=colorTypes['Ibn'],
+                                  marker='o', linestyle='')
+            artistother = pl.Line2D((0, 1), (0, 0), color=colorTypes['other'],
+                                    marker='o', linestyle='')
 
-        # axs[0].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
-        #               [handle for handle in handles0],
-        #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
-        #               [label for label in labels0],
-        #               framealpha=0.5, frameon=False, handletextpad=0.1,
-        #               columnspacing=0.6,  ncol=4, prop={'size': 40})
-        # axs[1].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
-        #               [handle for handle in handles1],
-        #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
-        #               [label for label in labels1],
-        #               framealpha=0.5, frameon=False, handletextpad=0.1,
-        #               columnspacing=0.6, ncol=4, prop={'size': 40})
-        # axs[2].legend(frameon=False, prop={'size': 40})
+            # axs[0].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
+            #               [handle for handle in handles0],
+            #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
+            #               [label for label in labels0],
+            #               framealpha=0.5, frameon=False, handletextpad=0.1,
+            #               columnspacing=0.6,  ncol=4, prop={'size': 40})
+            # axs[1].legend([artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +
+            #               [handle for handle in handles1],
+            #               ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +
+            #               [label for label in labels1],
+            #               framealpha=0.5, frameon=False, handletextpad=0.1,
+            #               columnspacing=0.6, ncol=4, prop={'size': 40})
+            # axs[2].legend(frameon=False, prop={'size': 40})
 
-        handles = [artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +\
-                      [handle for handle in handles0]+[handle for handle in handles1]
-        labels = ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +\
-                      [label for label in labels0]+[label for label in labels1]
+            handles = [artistIIb, artistIb, artistIc, artistIcbl, artistIbn, artistother] +\
+                          [handle for handle in handles0]+[handle for handle in handles1]
+            labels = ['IIb', 'Ib', 'Ic', 'Ic-bl', 'Ibn', 'other'] +\
+                          [label for label in labels0]+[label for label in labels1]
 
-        fig.legend(handles, labels, loc='upper center', ncol=4, prop={'size': 40})
+            fig.legend(handles, labels, loc='upper center', ncol=4, prop={'size': 40})
 
-        max_axs0 = [maxy, np.max(med[std > 0] + pc75[std > 0])]
-        max_axs1 = [maxy, np.max(wmu[std > 0] + wgstd[std > 0])]
-        max_axs2 = [np.max(wmu[std > 0] + wgstd[std > 0]), np.max(med[std > 0] + pc75[std > 0])]
+            max_axs0 = [maxy, np.max(med[std > 0] + pc75[std > 0])]
+            max_axs1 = [maxy, np.max(wmu[std > 0] + wgstd[std > 0])]
+            max_axs2 = [np.max(wmu[std > 0] + wgstd[std > 0]), np.max(med[std > 0] + pc75[std > 0])]
 
-        min_axs0 = [miny, np.min(med[std > 0] - pc25[std > 0])]
-        min_axs1 = [miny, np.min(wmu[std > 0] - wgstd[std > 0])]
-        min_axs2 = [np.min(wmu[std > 0] - wgstd[std > 0]), np.min(med[std > 0] - pc25[std > 0])]
+            min_axs0 = [miny, np.min(med[std > 0] - pc25[std > 0])]
+            min_axs1 = [miny, np.min(wmu[std > 0] - wgstd[std > 0])]
+            min_axs2 = [np.min(wmu[std > 0] - wgstd[std > 0]), np.min(med[std > 0] - pc25[std > 0])]
 
-        #
-        #
-        # axs[0].set_ylim(np.nanmax(max_axs0), np.nanmin(min_axs0))
-        # axs[1].set_ylim(np.nanmax(max_axs1), np.nanmin(min_axs1))
-        # axs[2].set_ylim(np.nanmax(max_axs2), np.nanmin(min_axs2))
-        axs[0].set_xlim(-30, 100)
-        axs[1].set_xlim(-30, 100)
-        axs[2].set_xlim(-30, 100)
-        axs[0].set_ylim(4, -1)
-        axs[1].set_ylim(4, -1)
-        axs[2].set_ylim(4, -1)
-        axs[2].set_xlabel("phase (days since Vmax)", fontsize=50)
-        fig.text(0.06, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=50)
+            axs[0].set_xlim(-30, 100)
+            axs[1].set_xlim(-30, 100)
+            axs[2].set_xlim(-30, 100)
+            axs[0].set_ylim(4, -1)
+            axs[1].set_ylim(4, -1)
+            axs[2].set_ylim(4, -1)
+            axs[2].set_xlabel("phase (days since Vmax)", fontsize=50)
+            axs[0].text(90, 0, b, size=50)
+            fig.text(0.06, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=50)
 
-        for ax in (axs):
-            ax.tick_params(axis="both", direction="in", which="major", right=True, top=True, size=7, labelsize=45,
-                           width=2)
-            ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=4, width=2)
-            ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-            ax.yaxis.set_minor_locator(AutoMinorLocator(4))
-            ax.set_yticks([ -1, 0, 1, 2, 3])
-            ax.set_yticklabels([ '-1', '0', '1', '2', '3'])
-            ax.set_xticks([-20, 0, 20, 40, 60, 80, 100])
-            ax.set_xticklabels(['-20', '0', '20', '40', '60', '80', ''])
-            ax.axvline(0, color = 'grey', alpha = 0.5)
+            for ax in (axs):
+                ax.tick_params(axis="both", direction="in", which="major", right=True, top=True, size=7, labelsize=45,
+                               width=2)
+                ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=4, width=2)
+                ax.xaxis.set_minor_locator(AutoMinorLocator(4))
+                ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+                ax.set_yticks([ -1, 0, 1, 2, 3])
+                ax.set_yticklabels([ '-1', '0', '1', '2', '3'])
+                ax.set_xticks([-20, 0, 20, 40, 60, 80, 100])
+                ax.set_xticklabels(['-20', '0', '20', '40', '60', '80', ''])
+                ax.axvline(0, color = 'grey', alpha = 0.5)
 
-        plt.setp(axs[0].get_xticklabels(), visible=False)
-        plt.setp(axs[1].get_xticklabels(), visible=False)
-        plt.subplots_adjust(hspace=.0)
-        fig.savefig("outputs/UberTemplate_%s_types.pdf" % \
-                    (b + 'p' if b in ['u', 'r', 'i']
-                     else b), bbox_inches='tight')
+            plt.setp(axs[0].get_xticklabels(), visible=False)
+            plt.setp(axs[1].get_xticklabels(), visible=False)
+            plt.subplots_adjust(hspace=.0)
+            fig.savefig(os.getenv("SESNPATH") +"maketemplates/outputs/output_plots/UberTemplate_%s_types.pdf" % \
+                        (b + 'p' if b in ['u', 'r', 'i']
+                         else b), bbox_inches='tight')
 
         #############################################################################################################################
         # A two-panel plot for each band.
@@ -872,7 +866,8 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
             ax0.grid()
             ax2.grid()
 
-            fig2[0].savefig("ubertemplates/weights_%s_types.pdf" % \
+            fig2.savefig(os.getenv("SESNPATH") + 
+                        "maketemplates/more_plots/weights_%s_types.pdf" % \
                             (b + 'p' if b in ['u', 'r', 'i']
                              else b))
 
@@ -909,7 +904,8 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
             ax1.set_aspect('auto')
             ax0.grid()
 
-            fig3[0].savefig("ubertemplates/weights_hist_%s_types.pdf" % \
+            fig3[0].savefig(os.getenv("SESNPATH") + 
+                            "maketemplates/more_plots/weights_hist_%s_types.pdf" % \
                             (b + 'p' if b in ['u', 'r', 'i']
                              else b))
 
@@ -928,7 +924,8 @@ def doall(b=su.bands, weights_plot=False, weights_heatmap=False):
 
         templates, templates['spl_mu'], templates['spl_med'] = wSmoothAverage(templates, 3)
 
-        pkl.dump(templates, open("outputs/UberTemplate_%s.pkl" % \
+        pkl.dump(templates, open(os.getenv("SESNPATH") + 
+                                "maketemplates/outputs/Ibc_template_files/UberTemplate_%s.pkl" % \
                                  (b + 'p' if b in ['u', 'r', 'i']
                                   else b), 'wb'))
 

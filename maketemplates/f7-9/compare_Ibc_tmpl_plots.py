@@ -49,15 +49,19 @@ args = parse_options()
 if not args.dir is None:
     output_directory = args.dir
 else:
-    output_directory = './../../GPSNtempl_output/'
+    output_directory = os.getenv("SESNPATH") + "maketemplates/outputs/output_plots/"
 
-bands = ['u', 'U', 'B', 'g', 'r', 'i', 'V', 'R', 'I', 'J', 'H', 'K', 'w2', 'm2', 'w1']
+bands = ['u', 'U', 'B', 
+         'g', 'r', 'i', 
+         'V', 'R', 'I', 
+         'J', 'H', 'K',
+         'w1', 'm2', 'w2']
 
 for b in bands:
 
     templates[b] = {}
 
-    path = os.getenv("SESNPATH") + "maketemplates/outputs/ubertemplates/UberTemplate_%s.pkl" %\
+    path = os.getenv("SESNPATH") + "maketemplates/outputs/Ibc_template_files/UberTemplate_%s.pkl" %\
                                     (b + 'p' if b in ['u', 'r', 'i'] else b)
     templates_ = pkl.load(open(path, "rb"))
 
@@ -144,7 +148,7 @@ plt.subplots_adjust(hspace=0, wspace=0)
 
 fig.text(0.5, 0.04, 'Phase (days)', ha='center', size=40)
 fig.text(0.07, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size=40)
-fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/allbands_Ibc.pdf", bbox_inches='tight')
+fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/output_plots/allbands_Ibc.pdf", bbox_inches='tight')
 plt.savefig(output_directory + 'allbands_Ibc.pdf', bbox_inches='tight')
 
 # Compare Ibc templates to D11 and T15
@@ -161,10 +165,10 @@ V_max_t = \
     templates['V']['phs'][(templates['V']['phs'] < max(D11_V[:, 0])) & (templates['V']['phs'] > min(D11_V[:, 0]))][
         V_max_ind]
 
-axs[0].plot(D11_V[:, 0], D11_V[:, 1], '-', color='#2166ac', label='D11 V', linewidth=3)
+axs[0].plot(D11_V[:, 0], D11_V[:, 1], '-', color='#2166ac', label='D11 V template', linewidth=3)
 axs[0].plot(templates['V']['phs'] - V_max_t,
             templates['V']['med_smoothed'],
-            '-', color='#1b7837', linewidth=3, label='Ibc template')
+            '-', color='#1b7837', linewidth=3, label='Our Ibc V template')
 axs[0].fill_between(templates['V']['phs'] - V_max_t,
                     templates['V']['pc25_smoothed'],
                     templates['V']['pc75_smoothed'],
@@ -177,10 +181,10 @@ R_max_ind = np.nanargmin(templates['R']['med_smoothed'][
 R_max_t = templates['R']['phs'][(templates['R']['phs'] < max(D11_R[:, 0])) &
                                 (templates['R']['phs'] > min(D11_R[:, 0]))][R_max_ind]
 
-axs[1].plot(D11_R[:, 0], D11_R[:, 1], '-', color='#2166ac', label='D11 R', linewidth=3)
+axs[1].plot(D11_R[:, 0], D11_R[:, 1], '-', color='#2166ac', label='D11 R template', linewidth=3)
 axs[1].plot(templates['R']['phs'],
             templates['R']['med_smoothed'],
-            '-', color='#b2182b', linewidth=3, label='Ibc template')
+            '-', color='#b2182b', linewidth=3, label='Our Ibc R template')
 axs[1].fill_between(templates['R']['phs'],
                     templates['R']['pc25_smoothed'],
                     templates['R']['pc75_smoothed'],
@@ -203,8 +207,8 @@ axs[1].set_ylim(4, -0.5)
 fig.text(0.5, 0.0, 'Phase (days)', ha='center', size=40)
 fig.text(0.05, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size=40)
 plt.subplots_adjust(hspace=0, wspace=0)
-fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/compare_with_D11_4.pdf", bbox_inches='tight')
-plt.savefig(output_directory + 'compare_with_D11_4.pdf', bbox_inches='tight')
+fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/output_plots/compare_with_D11_4.pdf", bbox_inches='tight')
+plt.savefig(output_directory + 'compare_with_D11.pdf', bbox_inches='tight')
 
 T15['Mu'] = -2.5 * np.log10(T15['Fu'] / T15['Fu'][0])
 T15['Mr'] = -2.5 * np.log10(T15['Fr'] / T15['Fr'][0])
@@ -214,10 +218,11 @@ fig, axs = plt.subplots(3, 1, figsize=(22, 20), sharex=True)
 
 u_max_ind = np.nanargmin(templates['u']['med_smoothed'])
 u_max_t = templates['u']['phs'][u_max_ind]
-axs[0].plot(T15['Ep.u'], T15['Mu'] - min(T15['Mu']), '-', color='#2166ac', linewidth=3, label="T15 u")
+axs[0].plot(T15['Ep.u'], T15['Mu'] - min(T15['Mu']), '-', 
+            color='#2166ac', linewidth=3, label="T15 u template")
 axs[0].plot(templates['u']['phs'] - u_max_t,
             templates['u']['med_smoothed'],
-            '-', color='black', linewidth=3, label='Ibc template')
+            '-', color='black', linewidth=3, label='Our Ibc u template')
 axs[0].fill_between(templates['u']['phs'] - u_max_t,
                     templates['u']['pc25_smoothed'],
                     templates['u']['pc75_smoothed'],
@@ -229,10 +234,11 @@ axs[0].legend(loc=1, prop={'size': 40})
 r_max_ind = np.nanargmin(templates['r']['med_smoothed'])
 r_max_t = templates['r']['phs'][r_max_ind]
 
-axs[1].plot(T15['Ep.r'], T15['Mr'] - min(T15['Mr']), '-', color='#2166ac', linewidth=3, label="T15 r")
+axs[1].plot(T15['Ep.r'], T15['Mr'] - min(T15['Mr']), '-', 
+            color='#2166ac', linewidth=3, label="T15 r template")
 axs[1].plot(templates['r']['phs'] - r_max_t,
             templates['r']['med_smoothed'],
-            '-', color='#b2182b', linewidth=3, label='Ibc template')
+            '-', color='#b2182b', linewidth=3, label='Our Ibc r template')
 axs[1].fill_between(templates['r']['phs'] - r_max_t,
                     templates['r']['pc25_smoothed'],
                     templates['r']['pc75_smoothed'],
@@ -244,10 +250,11 @@ axs[1].invert_yaxis()
 i_max_ind = np.nanargmin(templates['i']['med_smoothed'])
 i_max_t = templates['i']['phs'][i_max_ind]
 
-axs[2].plot(T15['Ep.i'], T15['Mi'] - min(T15['Mi']), '-', color='#2166ac', linewidth=3, label="T15 i")
+axs[2].plot(T15['Ep.i'], T15['Mi'] - min(T15['Mi']), '-', 
+            color='#2166ac', linewidth=3, label="T15 i template")
 axs[2].plot(templates['i']['phs'][:len(templates['i']['med_smoothed'])] - i_max_t, templates['i']['med_smoothed'], '-',
             color='#542788', linewidth=3,
-            label='Ibc template')
+            label='Our Ibc i template')
 # axs[2].plot(templates['i']['phs'][templates['i']['std']>0], templates['i']['wmu'][templates['i']['std']>0],'-', color='orange', label='Average')
 axs[2].fill_between(templates['i']['phs'][:len(templates['i']['med_smoothed'])] - i_max_t,
                     templates['i']['pc25_smoothed'][:len(templates['i']['med_smoothed'])],
@@ -269,5 +276,5 @@ axs[2].set_ylim(4, -0.5)
 fig.text(0.5, 0.05, 'Phase (days)', ha='center', size=40)
 fig.text(0.07, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size=40)
 plt.subplots_adjust(hspace=0, wspace=0)
-fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/compare_with_T15.pdf", bbox_inches='tight')
+fig.savefig(os.getenv("SESNPATH") + "maketemplates/outputs/output_plots/compare_with_T15.pdf", bbox_inches='tight')
 plt.savefig(output_directory + 'compare_with_T15.pdf', bbox_inches='tight')
