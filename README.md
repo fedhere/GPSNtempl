@@ -3,7 +3,7 @@ Photometric surveys, like Vera C. Rubin’s Legacy Survey of Space and Time, dis
 among and within subtypes, setting the stage for studies aimed at relating the explosion properties to their stellar progenitors.  Our templates can help evaluate the current photometric simulations used to develop classification methods and identify peculiar behavior.
 
 
-This repository contains the codes, data, plots, tables and results of the paper "Data-driven Lightcurve templates for Stripped Envelope Supernovae" that was introduced above and is going to be submitted to the arxiv very soon!
+This repository contains the codes, data, plots, tables and results of the paper "Multi-filter UV to NIR Data-driven Light Curve Templates for Stripped Envelope Supernovae" that is submitted to ApJS and the preprint can be found at https://arxiv.org/abs/2405.01672
 
 
 This repo works with utilities which are stored in https://github.com/fedhere/SESNCfAlib and https://github.com/fedhere/fedsastroutils.
