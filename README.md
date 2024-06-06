@@ -5,6 +5,11 @@ among and within subtypes, setting the stage for studies aimed at relating the e
 
 This repository contains the codes, data, plots, tables and results of the paper "Multi-filter UV to NIR Data-driven Light Curve Templates for Stripped Envelope Supernovae" that is submitted to ApJS and the preprint can be found at https://arxiv.org/abs/2405.01672
 
+The final Ibc and GP templates can be found in the folder "share_tmpls".
+
+
+
+Instructions for running the codes:
 
 This repo works with a few utility codes which are stored in https://github.com/fedhere/SESNCfAlib and https://github.com/fedhere/fedsastroutils.
 
