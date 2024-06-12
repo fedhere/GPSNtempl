@@ -9,19 +9,29 @@ import traceback
 import scipy.optimize as op
 import george
 from george import kernels
+import sys
+try:
+    os.environ['SESNPATH']
+except KeyError:
+    print ("must set environmental variable SESNPATH and SESNCfAlib")
+    sys.exit()
 
-# s = json.load( open(str(os.getenv ('PUI2015'))+"/fbb_matplotlibrc.json") )
-# pl.rcParams.update(s)
-
-cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
-
+cmd_folder = os.getenv("SESNPATH")+ "/maketemplates"
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
+cmd_folder = os.getenv("SESNPATH") + "/utils"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
-import snclasses as snstuff
-import templutils as templutils
+from templutils import *
+from snclasses import *
+from plotutils import *
+from makePhottable import *
+
+
 import matplotlib as mpl
 import warnings
+import math
 
 warnings.filterwarnings("ignore")
 
@@ -31,20 +41,19 @@ pl.rcParams['figure.figsize'] = (10, 10)
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-# # Loading CfA SN lightcurves
 
 # setting parameters for lcv reader
 # use literature data (if False only CfA data)
 LIT = True
 # use NIR data too
 FNIR = True
-FITGP = False
+FITGP = True
 
 fast_evolving = ['sn2015U', 'sn2010et', 'sn2015ap', 'sn2019aajs', 'PS1-12sk',
                  'sn2018bcc', 'sn2019rii', 'sn2019deh', 'sn2019myn',
                  'LSQ13ccw', 'sn2010jr', 'sn2011dh', 'sn2006aj', 'ASASSN-14ms',
                  'sn2010x', 'sn2007qv']  # , 'sn2016hgs', 'sn2014L']
-su = templutils.setupvars()
+su = setupvars()
 nbands = len(su.bands)
 coffset = su.coffset
 
@@ -85,7 +94,7 @@ def nll(p, y, x, gp, s):
     # print(gp.log_likelihood(y, squiet=True), smoothness)
 
     ll = gp.log_likelihood(y, quiet=True)  # - (smoothness) #np.sum((y - pred[inds]**2)) #
-    ll -= (smoothness) ** s
+    ll -= smoothness ** s
 
     # print (p, -ll if np.isfinite(ll) else 1e25)
     return -ll if np.isfinite(ll) else 1e25
@@ -122,7 +131,7 @@ def grad_nll(p, y, x, gp):
     return -gp.grad_lnlikelihood(y, quiet=True)
 
 
-perType = True
+perType = False
 pars = {'Ib': [-2.44, -1.01],
         'Ib-Ca-rich': [-2.44, -1.01],
         'Ibn': [-0.06, -2.95],
@@ -135,25 +144,29 @@ par1 = pars[tp][0]
 par2 = pars[tp][1]
 
 if __name__ == '__main__':
-    # uncomment for all lcvs to be read in
-    if len(sys.argv) > 1:
 
-        if perType:
-            allsne_list = pd.read_csv(os.getenv("SESNCFAlib") +
-                                      "/SESNessentials.csv", encoding="ISO-8859-1")
-            allsne = [sys.argv[1]]
-            if allsne_list[allsne_list.SNname == allsne[0]].Type.values[0] == tp:
-                pass
-            else:
-                if FITGP:
+    output_directory = os.getenv("SESNPATH") + "extra_outputs/"
+    if not os.path.isdir(output_directory):
+        os.system(output_directory)
+
+        if len(sys.argv) > 1:
+
+            if perType:
+                allsne_list = pd.read_csv(os.getenv("SESNPATH") +
+                                          "utils/SESNessentials.csv", encoding="ISO-8859-1")
+                allsne = [sys.argv[1]]
+                if allsne_list[allsne_list.SNname == allsne[0]].Type.values[0] == tp:
                     pass
                 else:
-                    tp = allsne_list[allsne_list.SNname == allsne[0]].Type.values[0]
-                    par1 = pars[tp][0]
-                    par2 = pars[tp][1]
+                    if FITGP:
+                        pass
+                    else:
+                        tp = allsne_list[allsne_list.SNname == allsne[0]].Type.values[0]
+                        par1 = pars[tp][0]
+                        par2 = pars[tp][1]
 
-        else:
-            allsne = [sys.argv[1]]
+            else:
+                allsne = [sys.argv[1]]
 
 
 
@@ -161,22 +174,17 @@ if __name__ == '__main__':
 
         if perType:
 
-            allsne = pd.read_csv(os.getenv("SESNCFAlib") +
-                                 "/SESNessentials.csv", encoding="ISO-8859-1")
+            allsne = pd.read_csv(os.getenv("SESNPATH") +
+                                 "utils/SESNessentials.csv", encoding="ISO-8859-1")
             allsne = allsne.SNname[allsne.Type == tp].values
 
         else:
-            allsne = pd.read_csv(os.getenv("SESNCFAlib") +
-                                 "/SESNessentials.csv", encoding="ISO-8859-1")['SNname'].values
-    # print (allsne)
-
-    # set up SESNCfalib stuff
-
-    # errorbarInflate = {"93J":30,
-    #                   "05mf":1}
+            allsne = pd.read_csv(os.getenv("SESNPATH") +
+                                 "utils/SESNessentials.csv", encoding="ISO-8859-1")['SNname'].values
 
     all_params = {}
-
+    count = 0
+    print('Number SNe read from the file %i'%len(allsne))
     for sn in allsne:
 
         all_params[sn] = {}
@@ -186,10 +194,10 @@ if __name__ == '__main__':
         #     s = 1
 
         # read and set up SN and look for photometry files
-        try:
-            thissn = snstuff.mysn(sn, addlit=True)
-        except AttributeError:
+
+        if sn.startswith('#'):
             continue
+        thissn = mysn(sn, addlit=True)
         if len(thissn.optfiles) + len(thissn.fnir) == 0:
             print("bad sn")
 
@@ -201,17 +209,10 @@ if __name__ == '__main__':
         if thissn.Vmax is None or thissn.Vmax == 0 or np.isnan(thissn.Vmax):
             print("bad sn")
         print(" starting loading ")
-        # print (os.environ['SESNPATH'] + "/finalphot/*" + \
-        #        thissn.snnameshort.upper() + ".*[cf]")
-        # print (os.environ['SESNPATH'] + "/finalphot/*" + \
-        #        thissn.snnameshort.lower() + ".*[cf]")
-
-        # print( glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
-        #                  thissn.snnameshort.upper() + ".*[cf]") + \
-        #        glob.glob(os.environ['SESNPATH'] + "/finalphot/*" + \
-        #                  thissn.snnameshort.lower() + ".*[cf]") )
 
         lc, flux, dflux, snname = thissn.loadsn2(verbose=False)
+        # print(thissn.lc)
+        # print(thissn.photometry)
         thissn.setphot()
         thissn.getphot()
         thissn.setphase()
@@ -219,11 +220,10 @@ if __name__ == '__main__':
         thissn.sortlc()
         thissn.printsn()
 
-        # print (lc)
-
-        # check that it is k
+        # check that it is ok
         if np.array([n for n in thissn.filters.values()]).sum() == 0:
             print("bad sn")
+        count += 1
 
         for b in su.bands:
 
@@ -249,7 +249,7 @@ if __name__ == '__main__':
                 print(b, thissn.filters[b])
                 continue
 
-            templatePkl = "ubertemplates/UberTemplate_%s.pkl" % (b + 'p' if b in ['u', 'r', 'i']
+            templatePkl = "outputs/Ibc_template_files/UberTemplate_%s.pkl" % (b + 'p' if b in ['u', 'r', 'i']
                                                                  else b)
             # tmpl = pkl.load(open(templatePkl, "rb"))
 
@@ -517,7 +517,7 @@ if __name__ == '__main__':
                 except:  # Runtime.Error:
                     traceback.print_exc()
                     print('got error')
-                    # pl.savefig("GPfit%s_%s.png"%(sn,b))
+                    # pl.savefig(output_directory+"GPfit%s_%s.png"%(sn,b))
                     continue
                 # print ("hyper parameters: ", gp.kernel)
                 # print("loglikelihood2: ", gp.lnlikelihood(y- tmpl_x))
@@ -557,16 +557,17 @@ if __name__ == '__main__':
                 # spl = InterpolatedUnivariateSpline(templ.phs, ysmooth)
 
                 xl = pl.xlabel("log time (starting 30 days before peak)")
-                pl.savefig("outputs/test1/GPfit%s_%s_opt_test2.png" % (sn, bb))
+                pl.savefig(output_directory + "gpFit_single_SN_plot/GPfit%s_%s_opt_test2.png" % (sn, bb))
 
-                # pkl.dump(all_params, open("outputs/test1/all_params_scipy_opt_test.pkl", "wb"))
-                # pkl.dump((y, gp, tmpl['spl_med']), open("outputs/test1/GPfit%s_%s.pkl" % (sn, bb), "wb"))
+                pkl.dump(all_params, open(output_directory + "all_params_scipy_opt_test.pkl", "wb"))
+                pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "GPfit%s_%s.pkl" % (sn, bb), "wb"))
 
 
 
             else:
                 fig.tight_layout()
-                print('Saving the plots...')
-                pl.savefig("outputs/GPfit%s_%s_no_gpopt_2022.pdf" % (sn, bb))
-                # pl.savefig("outputs/GPfit%s_%s_no_gpopt_2022.png" % (sn, bb))
-                pkl.dump((y, gp, tmpl['spl_med']), open("outputs/GPfit%s_%s.pkl" % (sn, bb), "wb"))
+                pl.savefig(output_directory+"gpFit_single_SN_plot/GPfit%s_%s_no_gpopt_2022.pdf" % (sn, bb))
+                pl.savefig(output_directory + "GPfit%s_%s_no_gpopt_2022.png" % (sn, bb))
+                pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "gpFit_single_SN/GPfit%s_%s.pkl" % (sn, bb), "wb"))
+
+    print('Total of %i SESNe were analyzed.'%count)

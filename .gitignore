@@ -12,6 +12,8 @@ logs/
 .idea/
 .icloud
 .dat
+.pkl
+extra_outputs/
 .ipynb_checkpoints/
 __pycache__/
 *.log

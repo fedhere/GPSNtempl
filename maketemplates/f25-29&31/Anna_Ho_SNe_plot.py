@@ -322,12 +322,14 @@ frame1 = fig.text(0.08, 0.5, 'Relative magnitude', va='center', rotation='vertic
 frame2 = fig.text(0.45, 0.05, 'Phase (days)', va='center', size=labelsize)
 
 
-for ax in axs.flatten():
+for a, ax in enumerate(axs.flatten()):
     ax.tick_params(axis="both", direction="in", which="major", right=True, top=True, size=12, labelsize=labelsize, width=2)
     ax.tick_params(axis="both", direction="in", which="minor", right=True, top=True, size=7, width=2)
     ax.xaxis.set_minor_locator(AutoMinorLocator(4))
     ax.yaxis.set_minor_locator(AutoMinorLocator(4))
+    if a in [0, 1, 2]:
+        axs.flatten()[a].tick_params(axis="x", bottom=True, top=True, labelbottom=True, labeltop=True)
 plt.subplots_adjust(hspace=0, wspace=0, top=0.94)
 plt.savefig(
-    os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/all_Anna_Ho.pdf',
+    os.getenv("SESNPATH") + 'maketemplates/outputs/output_plots/all_Anna_Ho2.pdf',
     bbox_inches='tight')

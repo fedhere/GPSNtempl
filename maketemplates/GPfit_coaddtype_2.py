@@ -7,17 +7,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
-
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-import templutils as templutils
-
-cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-
-import snclasses as snstuff
+import utils.snclasses as snstuff
 import matplotlib as mpl
 import warnings
 
@@ -318,7 +308,7 @@ if __name__ == '__main__':
             #     up_lim = 20
             #     t_sn = t[(t >= low_lim) * (t <= up_lim)]
 
-            pklf = "./../../GPSNtempl_output/gpFit_single_SN/GPfit%s_%s.pkl" % (sn, b + 'p' if b in ['u', 'r', 'i']
+            pklf = "./../../GPSNtempl_output/old_outputs/GPfit%s_%s.pkl" % (sn, b + 'p' if b in ['u', 'r', 'i']
             else b)
             if not os.path.isfile(pklf):
                 print("missing file ", pklf)
@@ -327,6 +317,9 @@ if __name__ == '__main__':
                 continue
 
             ygp, gp, tmplm = pkl.load(open(pklf, "rb"))
+            print(y.shape)
+            print(x.shape)
+            print(tmplm(x))
             # try:
 
             if x[0] > 0:
@@ -340,13 +333,6 @@ if __name__ == '__main__':
                 else:
                     y_min = y[np.argmin(np.abs(x))] + tmplm(x)[np.argmin(np.abs(x))]
                     y = y - y_min
-
-            # if x[0] > 0:
-            #     if x[0] > 5:
-            #         continue
-            # elif x[-1] < 0:
-            #     if x[-1] < -5:
-            #         continue
 
             mu, cov = gp.predict(y + tmplm(x), np.log(t_sn + 30).reshape(-1, 1))
             # except ValueError:
@@ -514,7 +500,7 @@ if __name__ == '__main__':
                     musShifted[i][j] = (mus[i][j]) - yoffset
                     stdsShifted[i][j] = stds[i][j]
 
-            print(musShifted)
+            # print(musShifted)
             axv2[b][0].plot(t, musShifted[i][j], lw=2,
                             label=thissn.snnameshort, alpha=0.5,
                             color=clrs[i])
@@ -548,10 +534,10 @@ if __name__ == '__main__':
         # print('Removed sn', sn)
 
     # for k,m in enumerate(mus):
-    np.save('mus.npy', mus)
-    np.save('stds.npy', stds)
-    np.save('musShifted.npy', musShifted)
-    np.save('stdsShifted.npy', stdsShifted)
+    # np.save('mus.npy', mus)
+    # np.save('stds.npy', stds)
+    # np.save('musShifted.npy', musShifted)
+    # np.save('stdsShifted.npy', stdsShifted)
 
     for j, b in enumerate(bands):
 
@@ -825,9 +811,9 @@ if __name__ == '__main__':
             axv1[b][0].grid(True)
             axv1[b][1].grid(True)
             axv1[b][2].grid(True)
-            pkl.dump(thisfit,
-                     open("outputs/GPs_2022/GPalltemplfit_%s_%s_rm_07rz.pkl" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
-                     else b), "wb"))
+            # pkl.dump(thisfit,
+            #          open("outputs/GPs_2022/GPalltemplfit_%s_%s_rm_07rz.pkl" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
+            #          else b), "wb"))
 
             # pl.figure()
 
@@ -883,9 +869,9 @@ if __name__ == '__main__':
             # figs_com[j].savefig(
             #     "outputs/GPs_2022/GPalltemplfit_%s_%s_compare_2022.png" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
             #     else b))
-            figs_com2[j].savefig(
-                "outputs/GPs_2022/GPMedtemplfit_%s_%s_outlier_2022_2.png" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
-                else b))
+            # figs_com2[j].savefig(
+            #     "outputs/GPs_2022/GPMedtemplfit_%s_%s_outlier_2022_2.png" % (SNTYPE, b + 'p' if b in ['u', 'r', 'i']
+            #     else b))
             # os.system("pdfcrop outputs/GPalltemplfit_%s_%s_V1.pdf /Users/fbianco/science/Dropbox/papers/SESNtemplates.working/figs/GPalltemplfit_%s_%s_V1.pdf"%(SNTYPE,bb,SNTYPE,bb))
         else:
             print('No Rolling Median was found for the GP templates of subtype' , SNTYPE, ' in band ', b)

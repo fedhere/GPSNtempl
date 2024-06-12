@@ -1,4 +1,5 @@
-#This version was modified by Somayeh 1/13/2022 to make the table with SNR more compact, 
+#This file was originally written by Federica Bianco and
+# was modified by Somayeh to make the table with SNR more compact, 
 #adding one column of N, [min, max], SNR for each band
 
 import sys
@@ -41,9 +42,6 @@ today_year = int(str(datetime.date.today().year)[-2:])
 su=setupvars()
 
 
-
-s = json.load(open("./../fbb_matplotlibrc.json", "r"))
-mpl.rcParams.update(s)
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=[
     "SteelBlue",
     "IndianRed",
@@ -73,7 +71,7 @@ mpl.rcParams.update({'font.size': 21,
                      'ytick.labelsize': 21
                      })
 mpl.rcParams['date.autoformatter.year'] = '%Y'
-s = json.load(open("./../fbb_matplotlibrc.json", "r"))
+s = json.load(open(os.getenv("SESNPATH") + "utils/fbb_matplotlibrc.json", "r"))
 mpl.rcParams.update(s)
 pl.rcParams.update({'axes.grid':False})
 
@@ -167,9 +165,10 @@ def plotDiscovery(df, df2 = None, verbose=False):
                                     label="our template sample",
                                     color="IndianRed")
     ax1.legend(loc=2)
-    ax1.set_yticks([0,100,200,300, 400, 500])
-    ax1.set_yticklabels(["","100","200","300", "400", "500"])
-    ax1.set_ylim(0,500)    
+    # ax1.set_yticks([0,100,200,300, 400, 500])
+    # ax1.set_yticklabels(["","100","200","300", "400", "500"])
+    # ax1.set_ylim(0,550) 
+    ax1.set_yscale('log')   
     
     
     to_timestamp = np.vectorize(lambda x: pd.to_timedelta(x -
@@ -194,10 +193,10 @@ def plotDiscovery(df, df2 = None, verbose=False):
 
     #pl.hist(years, bins=14)
     
-    ax2.set_yticks([0,25,50])
-    ax2.set_yticklabels(["","25","50"])
+    ax2.set_yticks([0, 10, 20,30, 40])
+    ax2.set_yticklabels(["","10", "20", "30","40"])
     ax2.set_title(" ", )
-    ax2.set_ylim(0,55)
+    ax2.set_ylim(0,40)
      
     pl.legend(loc='upper center',  fancybox=True, framealpha=0.5)
     fig.subplots_adjust(hspace=0.05)
@@ -235,8 +234,9 @@ def plotDiscovery(df, df2 = None, verbose=False):
     xnew = np.linspace(0, x.max(), 100, endpoint=True)
     colors = cm.viridis(f(xnew) / f(xnew).max())
     i = 0
+
     ax3 = ax2.twiny()
-    for yy, c in zip(np.ones(len(xnew)) * 110, colors):
+    for yy, c in zip(np.ones(len(xnew)) * 39, colors):
         if verbose:
             print (yy,c,xnew[i])
         c[3] = 0.5
@@ -247,7 +247,7 @@ def plotDiscovery(df, df2 = None, verbose=False):
     print((ax3.get_xticklabels()))
     ax3.set_xticklabels(["" for i in ax3.get_xticklabels()])
     ax3.set_xlim(xnew[0], xnew[-1])
-    ax3.set_ylim(0, 140)
+    ax3.set_ylim(0, 50)
     
     ax1.set_ylabel("SNe discovered", fontsize=21)
     
@@ -264,7 +264,7 @@ def plotDiscovery(df, df2 = None, verbose=False):
     #pl.xlim(1949.9,2019.9)
 
     #pl.show()
-    pl.savefig("SESSNDiscoveryByYear.pdf",  bbox_inches='tight')
+    pl.savefig("SESSNDiscoveryByYear3.pdf",  bbox_inches='tight')
     # os.system("pdfcrop SESSNDiscoveryByYear.pdf ../figs/SESSNDiscoveryByYear.pdf")
     
 def mkzfloat(x):
@@ -306,7 +306,7 @@ def plotzWbox(df, cut=True, df2 = None):
                                 gridspec_kw = {'height_ratios':[2.5, 1]},
                                 sharex=True)
     pl.subplots_adjust( hspace=0.0 )
-    zhist(df, ax1, cut=cut, label="all SE SN with photometry")
+    zhist(df, ax1, cut=cut, label="all SESNe with photometry")
     
     sns.set_style("whitegrid")
     print ("df1 percentiles -16:{0:.5f} 50:{1:.5f} 16:{2:.5f}, 99.7:{3:.5f}".\
@@ -334,34 +334,37 @@ def plotzWbox(df, cut=True, df2 = None):
     pl.xlabel("z")
     
     #pl.show()
-    pl.savefig("SESSNzDistrib.pdf")
+    pl.savefig("SESSNzDistrib5.pdf")
     # os.system("pdfcrop SESSNzDistrib.pdf ../figs/SESSNzDistrib.pdf")
     
 if __name__ == "__main__":
     # read in
     nonSLSNOpenSNe = read_allSNeOpenSNCat()
+    sesndf = pd.read_csv(os.getenv("SESNPATH") +"utils/SESNessentials.csv", comment="#", encoding = "ISO-8859-1")
 
-    sesndf = pd.read_csv(os.getenv("SESNCFAlib") +"/SESNessentials.csv", comment="#", encoding = "ISO-8859-1")
-    # print (sesndf.Type)
-    #sesndf.replace(to_replace="<0000000", value=np.nan, inplace=True)
+
     for key in sesndf.columns[2:]:
         sesndf[key] = pd.to_numeric(sesndf[key], errors='coerce')
 
-    sesndf = sesndf.dropna(subset=[u'finalmaxVjd',
-       u'CfA VJD bootstrap',
-       u'CfA BJD bootstrap', u'CfA RJD bootstrap',
-       u'CfA IJD bootstrap', u'D11Vmaxdate'], how='all')
+    
+
+
+    # sesndf = sesndf.dropna(subset=[u'finalmaxVjd',
+    #    u'CfA VJD bootstrap',
+    #    u'CfA BJD bootstrap', u'CfA RJD bootstrap',
+    #    u'CfA IJD bootstrap', u'D11Vmaxdate'], how='all')
+    print('sesndfjc4',sesndf['SNname']
+        .values)
 
     sesndf['Name'] = sesndf.SNname.apply(lambda x: x.replace("sn1","SN1").\
                                          replace("sn2","SN2").\
                                          replace("SDSS-II","SDSS-II SN "))
+    print('sesndfjc',sesndf[sesndf['Name']=='SN2006jc'].values)
 
-    # print (nonSLSNOpenSNe.columns)
-    # print (sesndf.columns)
     
     sesndfmerged = sesndf.merge(nonSLSNOpenSNe, how="left",
                                 on="Name", indicator=True)
-    # print('Type_x is:'+ sesndfmerged['Type_x'])
+    print('sesndfmerged', sesndfmerged['Name'].values)
     print (" not in OSN but in my DB:",
            sesndfmerged[sesndfmerged._merge == 'left_only'].Name)
 
@@ -397,8 +400,9 @@ if __name__ == "__main__":
             sesndfmerged[b+'[min,max]'] = ['-'] * len(sesndfmerged.SNname)
             sesndfmerged[b+ ': N, [min,max], SNR'] = ['-'] * len(sesndfmerged.SNname)
 
-
+    total_dp = 0
     for sn in sesndfmerged.SNname.index:
+        
         thissn = mysn(sesndfmerged.loc[sn].SNname, addlit=True)
         thissn.readinfofileall(verbose=False, earliest=False, loose=True)
         
@@ -424,7 +428,7 @@ if __name__ == "__main__":
         if  np.isnan(thissn.dVmax):
             thissn.dVmax = 2
         sesndfmerged.at[sn, 'Vmax err'] = thissn.dVmax
-        # print(sesndfmerged['Type'][sn])
+
         sesndfmerged['Type'] = sesndfmerged.Type.map(lambda x:
                                                  x.replace('BL','bl'))
         sesndfmerged['Type'] = sesndfmerged.Type.map(lambda x:
@@ -434,6 +438,7 @@ if __name__ == "__main__":
 
 
         if "largetable" in sys.argv[1:]:
+            
             # thissn.getphot()
             thissn.setphase()
             print (sn, thissn.filters)
@@ -446,13 +451,15 @@ if __name__ == "__main__":
                             '%.1f'%np.round(np.nanmedian(snr[np.asarray(photcode) == b]),2)
                     # sesndfmerged.at[sn, b+' SNR[min,max]'] = '[%.1f,%.1f]'%(snr[np.asarray(photcode) == b].min(),\
                     #                   snr[np.asarray(photcode) == b].max())
+                    total_dp += int(thissn.filters[b])
                     sesndfmerged.at[sn, b+': N, [min,max], SNR'] = '%d'%thissn.filters[b] + ', '+\
                                                            '[%.1f,%.1f]'%(thissn.photometry[b]['phase'].min(),\
                                                                        thissn.photometry[b]['phase'].max())+ ', '+\
                                                            '%.1f'%np.round(np.nanmedian(snr[np.asarray(photcode) == b]),2)
 
                 if b in ['J', 'H', 'K']:   
-                  print(sn, b, sesndfmerged.at[sn, b])       
+                  print(sn, b, sesndfmerged.at[sn, b]) 
+    print('total number of all data points = ', total_dp )      
     sesndfmerged.sort_values('Vmax', inplace=True)
     if "table" in sys.argv[1:]:        
         #editing        
