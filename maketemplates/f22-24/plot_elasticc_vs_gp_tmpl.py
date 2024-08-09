@@ -1,5 +1,4 @@
 from Functions import *
-from savgol import savitzky_golay
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -277,7 +276,8 @@ for sntype in list(elasticc_sntype.keys()):
                     np.concatenate(ax)[b_index[b]].errorbar(x - x_peak - adj,\
                         mmax - m , yerr=merr, fmt='o',\
                         linewidth = 3, color = 'k',
-                        label = 'ELAsTiCC '+sntype, alpha = 0.1)
+                        label = 'ELAsTiCC '+sntype, alpha = 0.1,
+                        rasterized=True)
         #             np.concatenate(ax)[b_[j]].plot(t_new - new_t_peak,\
         #                 new_y_peak - m_func,\
         #                 '-', linewidth = 0.1, color = 'k', alpha = 0.1, label = 'VL fit')
@@ -286,7 +286,8 @@ for sntype in list(elasticc_sntype.keys()):
                 else:
                     np.concatenate(ax)[b_index[b]].errorbar(x - x_peak-adj,\
                         mmax - m , yerr=merr, fmt='o',\
-                        linewidth = 3, color = 'k', alpha = 0.1)
+                        linewidth = 3, color = 'k', alpha = 0.1,
+                        rasterized=True)
         #             np.concatenate(ax)[b_[j]].plot(t_new - new_t_peak,\
         #                 new_y_peak - m_func,\
         #                 '-', linewidth = 0.1, color = 'k', alpha = 0.1)
@@ -303,11 +304,13 @@ for sntype in list(elasticc_sntype.keys()):
             np.concatenate(ax)[b_index[b]].plot(meds_t, meds[sntype][j], "d",
                                             markersize = 20, color = '#fa9fb5',
                                            markeredgecolor='brown', zorder=10,
-                                               label = 'ELAsTiCC Per-day Median')
+                                               label = 'ELAsTiCC Per-day Median',
+                                               rasterized=True)
         else:
             np.concatenate(ax)[b_index[b]].plot(meds_t, meds[sntype][j], "d",
                                             markersize = 20, color = '#fa9fb5',
-                                           markeredgecolor='brown', zorder=10)
+                                           markeredgecolor='brown', zorder=10,
+                                           rasterized=True)
 
         for tp in SNTYPES_[sntype]:
 
@@ -326,11 +329,13 @@ for sntype in list(elasticc_sntype.keys()):
                 np.concatenate(ax)[b_[j]].plot(tmpl[b][tp]['t'],
                         tmpl[b][tp]['rollingMedian'],
                         '-',color = colorTypes[tp], alpha = alpha,
-                        linewidth=5, zorder = zorder, label = tp)
+                        linewidth=5, zorder = zorder, label = tp,
+                        rasterized=True)
                 np.concatenate(ax)[b_[j]].fill_between(tmpl[b][tp]['t'],\
                         tmpl[b][tp]['rollingPc25'],\
                         tmpl[b][tp]['rollingPc75'],\
-                        alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder)
+                        alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder,
+                        rasterized=True)
 
             else:
 
@@ -339,19 +344,23 @@ for sntype in list(elasticc_sntype.keys()):
 
                     np.concatenate(ax)[b_[j]].plot(tmpl[b][tp]['t'][tmpl[b][tp]['t']<35],\
                             tmpl[b][tp]['rollingMedian'][tmpl[b][tp]['t']<35],'-', alpha = alpha,\
-                            color = colorTypes[tp],linewidth=5, zorder = zorder)
+                            color = colorTypes[tp],linewidth=5, zorder = zorder,
+                            rasterized=True)
                     np.concatenate(ax)[b_[j]].fill_between(tmpl[b][tp]['t'][tmpl[b][tp]['t']<35],\
                             tmpl[b][tp]['rollingPc25'][tmpl[b][tp]['t']<35],\
                             tmpl[b][tp]['rollingPc75'][tmpl[b][tp]['t']<35],\
-                            alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder)
+                            alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder,
+                            rasterized=True)
                 else:
                     np.concatenate(ax)[b_[j]].plot(tmpl[b][tp]['t'],\
                             tmpl[b][tp]['rollingMedian'],'-', alpha = alpha,\
-                            color = colorTypes[tp],linewidth=5, zorder = zorder)
+                            color = colorTypes[tp],linewidth=5, zorder = zorder,
+                            rasterized=True)
                     np.concatenate(ax)[b_[j]].fill_between(tmpl[b][tp]['t'],\
                             tmpl[b][tp]['rollingPc25'],\
                             tmpl[b][tp]['rollingPc75'],\
-                            alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder)
+                            alpha = 0.3*alpha, color = colorTypes[tp], zorder = zorder,
+                            rasterized=True)
 
             np.concatenate(ax)[b_[j]].tick_params(axis="both", direction="in", which="major",\
                                                   right=True, top=True, size=7, labelsize=25, width = 2)
@@ -366,18 +375,21 @@ for sntype in list(elasticc_sntype.keys()):
     np.concatenate(ax)[0].set_yticks([0, -0.5, -1, -1.5, -2, -2.5, -3])
     np.concatenate(ax)[0].set_yticklabels([ '0','-0.5',  '-1', '-1.5', '-2', '-2.5', ''], size=30)
     np.concatenate(ax)[2].set_yticklabels(['0','-0.5',  '-1', '-1.5', '-2', '-2.5', ''], size=30)
+    
+    np.concatenate(ax)[2].xaxis.set_ticks([-20, -10, 0, 10, 20, 30, 40, 50])
+    np.concatenate(ax)[3].xaxis.set_ticks([-20, -10, 0, 10, 20, 30, 40, 50])
 
-    np.concatenate(ax)[2].set_xticklabels(['', '-20', '-10','0', '10', '20','30', '40', '50', ''], size=30)
-    np.concatenate(ax)[3].set_xticklabels(['', '-20','-10','0', '10', '20', '30', '40', '50', ''], size=30)
+    np.concatenate(ax)[2].xaxis.set_ticklabels(['-20', '-10','0', '10', '20','30', '40', '50'], size=30)
+    np.concatenate(ax)[3].xaxis.set_ticklabels(['-20','-10','0', '10', '20', '30', '40', '50'], size=30)
 
 
-
+    if sntype == 'Ic-bl':
+        np.concatenate(ax)[0].remove()
     plt.subplots_adjust(hspace=.03, wspace=0.03, top = 0.92, left = 0.1, bottom = 0.08)
 
     fig.text(0.5, 0.02, 'Phase (days)', ha='center', size = 40)
     fig.text(0.02, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size = 40)
 
     fig.savefig(os.getenv("SESNPATH") + 
-                'maketemplates/outputs/output_plots/\
-                elasticc_gp_tmpl_'+ sntype+'.pdf', 
+                'maketemplates/outputs/output_plots/elasticc_gp_tmpl_'+ sntype+'.pdf', 
                 bbox_inches='tight')

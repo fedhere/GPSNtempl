@@ -7,7 +7,8 @@ import pprint, pickle
 import pylab as pl
 from numpy import nanmean,nanmedian,nanstd
 
-LN10x2p5=5.75646273249
+LN10on2p5 = np.log(10) / 2.5
+
 def is_empty(any_structure, verbose=False):
     if any_structure:
         if verbose: print('Structure is not empty.')

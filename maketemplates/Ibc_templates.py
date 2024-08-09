@@ -47,12 +47,12 @@ from colors import rgb_to_hex
 MINEP, MAXEP = -30, 100
 archetypicalSNe = ['94I', '93J', '08D', '05bf', '04aw', '10bm', '10vgv']
 
-colorTypes = {'IIb': ['FireBrick', '*'],
+colorTypes = {'IIb': ['FireBrick', 'd'],
               'Ib': ['SteelBlue', '^'],
               'Ic': ['DarkGreen', 's'],
               'Ic-bl': ['DarkOrange', 'o'],
-              'Ibn': ['purple', 'X'],
-              'other': ['black', 'd']}
+              'Ibn': ['purple', 'v'],
+              'other': ['black', 'x']}
 
 # prepping SN data from scratch
 # (dont do that if you are testing or tuning plots)
@@ -201,6 +201,7 @@ def plotme2(data, b, axs, sncolors, verbose=False):
 
         if data['phase'][i][magoffset] < -10:
             # If there is a shock breakout, we want to make sure that is not chosen as the min mag
+            print(data['name'][i], b, '3shock breakout peak at phases earlier than -10 days')
             magoffset = np.where(data['mag'][i][corephases] ==
                                  min(data['mag'][i][corephases]))[0]
             ymin = data['mag'][i][corephases][magoffset]
@@ -247,21 +248,21 @@ def plotme2(data, b, axs, sncolors, verbose=False):
             axs[0].scatter(tmp[indx][~np.asarray(maskhere)],
                            data['mag'][i][indx][~np.asarray(maskhere)] - ymin,
                            marker=colorTypes[sntp][1], color=colorTypes[sntp][0], edgecolors='none', s=100,
-                           alpha=0.5)
+                           alpha=0.3)
             axs[1].scatter(tmp[indx][~np.asarray(maskhere)],
                            data['mag'][i][indx][~np.asarray(maskhere)] - ymin,
                            marker=colorTypes[sntp][1], color=colorTypes[sntp][0], edgecolors='none', s=100,
-                           alpha=0.5)
+                           alpha=0.3)
 
         else:
             axs[0].scatter(tmp[indx][~np.asarray(maskhere)],
                            data['mag'][i][indx][~np.asarray(maskhere)] - ymin,
                            marker=colorTypes[sntp][1], color=colorTypes[sntp][0], edgecolors='none', s=100,
-                           alpha=0.5)
+                           alpha=0.3)
             axs[1].scatter(tmp[indx][~np.asarray(maskhere)],
                            data['mag'][i][indx][~np.asarray(maskhere)] - ymin,
                            marker=colorTypes[sntp][1], color=colorTypes[sntp][0], edgecolors='none', s=100,
-                           alpha=0.5)
+                           alpha=0.3)
 
     # axs[2].grid(True)
     # axs[1].grid(True)
@@ -326,7 +327,6 @@ def preplcvs(inputSNe, workBands):
 
     # iterate over all SNe in metadata file
     for f in inputSNe:
-        # print(f)
 
         if f.startswith("#"): continue
         print("\n\n####################################################\n\n\n", f)
@@ -355,6 +355,7 @@ def preplcvs(inputSNe, workBands):
         thissn.getphot()
 
         if np.array([n for n in iter(thissn.filters.values())]).sum() == 0:
+            print('No data point found for: ', thissn.snnameshort)
             continue
 
         # thissn.plotsn(photometry=True)
@@ -396,7 +397,8 @@ def preplcvs(inputSNe, workBands):
             allSNe[b]['name'].append(thissn.snnameshort)
             allSNe[b]['type'].append(thissn.type)
 
-    ## remove duplicate entries from  array
+
+    # remove duplicate entries from  array
     for b in workBands:
         for i in range(len(allSNe[b]['mag'])):
             if len(allSNe[b]['phase'][i]) == 0:
@@ -409,6 +411,7 @@ def preplcvs(inputSNe, workBands):
             allSNe[b]['phase'][i] = records_array[:, 0]
             allSNe[b]['mag'][i] = records_array[:, 1]
             allSNe[b]['dmag'][i] = records_array[:, 2]
+
 
         # print('FindMe2', allSNe[b][allSNe[b]['type'] == np.unique(allSNe[b]['type'])[0]])
 

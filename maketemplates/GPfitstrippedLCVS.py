@@ -10,13 +10,15 @@ import scipy.optimize as op
 import george
 from george import kernels
 import sys
+import statistics
+
 try:
     os.environ['SESNPATH']
 except KeyError:
-    print ("must set environmental variable SESNPATH and SESNCfAlib")
+    print("must set environmental variable SESNPATH and SESNCfAlib")
     sys.exit()
 
-cmd_folder = os.getenv("SESNPATH")+ "/maketemplates"
+cmd_folder = os.getenv("SESNPATH") + "/maketemplates"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 cmd_folder = os.getenv("SESNPATH") + "/utils"
@@ -27,7 +29,6 @@ from templutils import *
 from snclasses import *
 from plotutils import *
 from makePhottable import *
-
 
 import matplotlib as mpl
 import warnings
@@ -41,7 +42,6 @@ pl.rcParams['figure.figsize'] = (10, 10)
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-
 # setting parameters for lcv reader
 # use literature data (if False only CfA data)
 LIT = True
@@ -50,12 +50,13 @@ FNIR = True
 FITGP = True
 
 fast_evolving = ['sn2015U', 'sn2010et', 'sn2015ap', 'sn2019aajs', 'PS1-12sk',
-                 'sn2018bcc', 'sn2019rii', 'sn2019deh', 'sn2019myn',
-                 'LSQ13ccw', 'sn2010jr', 'sn2011dh', 'sn2006aj', 'ASASSN-14ms',
-                 'sn2010x', 'sn2007qv']  # , 'sn2016hgs', 'sn2014L']
+                 'sn2018bcc', 'sn2019rii', 'sn2019deh', 'sn2019myn', 'sn2019php',
+                 'LSQ13ccw', 'sn2010jr', 'sn2006aj', 'ASASSN-14ms',
+                 'sn2010X', 'sn2007qv', 'iPTF15dld', 'sn2006jc']#, 'sn2016gkg']  # , 'sn2016hgs', 'sn2014L']
 su = setupvars()
 nbands = len(su.bands)
 coffset = su.coffset
+
 
 
 def fun(x):
@@ -66,8 +67,16 @@ def fun(x):
 def der(xy):
     xder, yder = xy[1], xy[0]
     # print ("here ", yder[1] - yder[:-1])
-    np.diff(yder) / np.diff(xder)
+    # np.diff(yder) / np.diff(xder)
     return np.array([np.diff(yder) / np.diff(xder), xder[:-1] + np.diff(xder) * 0.5])
+
+
+def smoothness_gen(x, y, gp):
+    return np.nansum(np.abs(der(der([gp.predict(y, x)[0], x]))), axis=1)[0]
+
+
+def variance_gen(x, y, gp):
+    return np.abs(der(der([gp.predict(y, x)[0], x])))[0]
 
 
 def nll(p, y, x, gp, s):
@@ -85,16 +94,16 @@ def nll(p, y, x, gp, s):
     # print(pred)
     # print(x)
     try:
-        smoothness = (np.nansum(np.abs(der(der([gp.predict(y, x)[0], x]))), axis=1)[0])
+        smoothness = smoothness_gen(x, y, gp)
         smoothness = smoothness if np.isfinite(smoothness) \
                                    and ~np.isnan(smoothness) else 1e25
     except np.linalg.LinAlgError:
         smoothness = 1e25
 
-    # print(gp.log_likelihood(y, squiet=True), smoothness)
-
     ll = gp.log_likelihood(y, quiet=True)  # - (smoothness) #np.sum((y - pred[inds]**2)) #
     ll -= smoothness ** s
+
+    # print('smoothness is ', smoothness)
 
     # print (p, -ll if np.isfinite(ll) else 1e25)
     return -ll if np.isfinite(ll) else 1e25
@@ -139,7 +148,7 @@ pars = {'Ib': [-2.44, -1.01],
         'Ic': [-1.66, -0.82],
         'Ic-bl': [-1.18, -1.41],
         'Ib-c': [-1.958, -1.278]}
-tp = 'Ic'  # 'Ib' # 'Ibn' #'Ic' #'IIb' #
+tp = 'Ib'  # 'Ib' # 'Ibn' #'Ic' #'IIb' #
 par1 = pars[tp][0]
 par2 = pars[tp][1]
 
@@ -147,28 +156,26 @@ if __name__ == '__main__':
 
     output_directory = os.getenv("SESNPATH") + "extra_outputs/"
     if not os.path.isdir(output_directory):
-        os.system(output_directory)
+        os.makedirs(output_directory)
 
-        if len(sys.argv) > 1:
+    if len(sys.argv) > 1:
 
-            if perType:
-                allsne_list = pd.read_csv(os.getenv("SESNPATH") +
-                                          "utils/SESNessentials.csv", encoding="ISO-8859-1")
-                allsne = [sys.argv[1]]
-                if allsne_list[allsne_list.SNname == allsne[0]].Type.values[0] == tp:
+        if perType:
+            allsne_list = pd.read_csv(os.getenv("SESNPATH") +
+                                      "utils/SESNessentials.csv", encoding="ISO-8859-1")
+            allsne = [sys.argv[1]]
+            if allsne_list[allsne_list.SNname == allsne[0]].Type.values[0] == tp:
+                pass
+            else:
+                if FITGP:
                     pass
                 else:
-                    if FITGP:
-                        pass
-                    else:
-                        tp = allsne_list[allsne_list.SNname == allsne[0]].Type.values[0]
-                        par1 = pars[tp][0]
-                        par2 = pars[tp][1]
+                    tp = allsne_list[allsne_list.SNname == allsne[0]].Type.values[0]
+                    par1 = pars[tp][0]
+                    par2 = pars[tp][1]
 
-            else:
-                allsne = [sys.argv[1]]
-
-
+        else:
+            allsne = [sys.argv[1]]
 
     else:
 
@@ -184,19 +191,22 @@ if __name__ == '__main__':
 
     all_params = {}
     count = 0
-    print('Number SNe read from the file %i'%len(allsne))
+    variance_params = {}
+    print('Number SNe read from the file %i' % len(allsne))
     for sn in allsne:
 
-        all_params[sn] = {}
-        # if sn in fast_evolving:
-        #     s = 0.25
-        # else:
-        #     s = 1
+
+        if sn in fast_evolving:
+            s = 0.25
+        else:
+            s = 1
 
         # read and set up SN and look for photometry files
 
         if sn.startswith('#'):
             continue
+        all_params[sn] = {}
+        variance_params[sn] = {}
         thissn = mysn(sn, addlit=True)
         if len(thissn.optfiles) + len(thissn.fnir) == 0:
             print("bad sn")
@@ -227,11 +237,11 @@ if __name__ == '__main__':
 
         for b in su.bands:
 
-            # if thissn.type == 'Ibn' or b in ['U', 'u', 'V', 'B', 'w1', 'w2']:
-            #     s = 0.25
+            # if thissn.type == 'Ibn' or b in ['I', 'U', 'u', 'V', 'B', 'w1', 'w2']:
+            #     s = 0.1
             # else:
             #     s = 1
-            s = 1
+            # s = 1
 
             thissn.getmagmax(band=b, forceredo=True)
 
@@ -243,14 +253,14 @@ if __name__ == '__main__':
             if b == 'r':
                 bb = 'rp'
 
-            all_params[sn][b] = []
+
 
             if thissn.filters[b] == 0:
                 print(b, thissn.filters[b])
                 continue
-
+            all_params[sn][bb] = []
             templatePkl = "outputs/Ibc_template_files/UberTemplate_%s.pkl" % (b + 'p' if b in ['u', 'r', 'i']
-                                                                 else b)
+                                                                              else b)
             # tmpl = pkl.load(open(templatePkl, "rb"))
 
             # Somayeh changed: The ubertemplates are being read this way:
@@ -372,7 +382,6 @@ if __name__ == '__main__':
                 ax1 = fig.add_subplot(212)
                 ax00 = fig.add_subplot(221)
                 ax01 = fig.add_subplot(222)
-                # fig.suptitle("%s band %s"%(sn, b), fontsize=16)
                 ax01.errorbar(np.log(x + 30), y, yerr=yerr, fmt='k.')
                 ax1.errorbar(x, y, yerr=yerr, fmt='k.')
                 ax1.grid()
@@ -437,12 +446,14 @@ if __name__ == '__main__':
             # print(b, x, tmpl_x)
             mu, cov = gp.predict(y - tmpl_x, np.log(t + 30))
             std = np.sqrt(np.diag(cov))
-
-            # print("loglikelihood1: ", gp.lnlikelihood(y- tmpl_x))
+            variance_params[sn][bb] = {}
+            variance_params[sn][bb]['mu_init'] = mu
+            variance_params[sn][bb]['mu_std_init'] = std
+            variance_params[sn][bb]['smoothness_init'] = variance_gen(np.log(t + 30), y - tmpl_x, gp)
 
             p0 = gp.kernel.parameter_vector
-            # print(x)
-            # print("loglikelihood1", gp.log_likelihood(y))
+
+
             if FITGP:
                 ax01.set_title("pars: %.2f %.2f" % (p0[0], p0[1]))
 
@@ -464,7 +475,7 @@ if __name__ == '__main__':
                 # ax01.legend(fontsize=15)
                 ax01.set_xlabel("Log Time (+30 days)", size=25)
                 ax01.set_xticks(major_xticks)
-                ax01.set_ylim(min(mu + tmpl_t)-.3, max(mu + tmpl_t)+0.3)
+                ax01.set_ylim(min(mu + tmpl_t) - .3, max(mu + tmpl_t) + 0.3)
 
                 major_xticks = ([-20, 0, 20, 40, 60, 80, 100])
 
@@ -494,6 +505,13 @@ if __name__ == '__main__':
 
             # Optimizing the hyper parameters:
             if FITGP:
+
+                variance_params[sn][bb]['t'] = t
+                variance_params[sn][bb]['x'] = x
+                variance_params[sn][bb]['y'] = y
+                variance_params[sn][bb]['yerr'] = yerr
+                variance_params[sn][bb]['tmpl_x'] = tmpl_x
+                variance_params[sn][bb]['tmpl_t'] = tmpl_t
                 try:
                     # results = op.minimize(nll_early(p0, y[x<10] - tmpl_x[x<10], np.log(t[t<10] + 30), gp)+
                     #                       nll_late(p0, y[x>10] - tmpl_x[x>10], np.log(t[t>10] + 30), gp), x0 = p0)
@@ -501,22 +519,26 @@ if __name__ == '__main__':
                     results = op.minimize(nll, [p0[0], p0[1]],
                                           args=(y - tmpl_x,
                                                 np.log(t + 30), gp, s))
-                    # results = op.minimize(nll, p0,
-                    #                       args=(y - tmpl_x,
-                    #                             np.log(t + 30), gp))
-
-                    #    # Update the kernel and print the final log-likelihood.
+                    # Update the kernel and print the final log-likelihood.
                     gp.kernel.parameter_vector = results.x
-                    #    gp.kernel.parameter_vector = results.x[:2]
+                    # print('Average second derivative for final model in %s band is: ' % (b),
+                    #       np.nanmean(variance_gen(np.log(t + 30), y - tmpl_x, gp)))
+                    variance_params[sn][bb]['smoothness_opt'] = variance_gen(np.log(t + 30), y - tmpl_x, gp)
+                    # print('Average uncertainty in the data points in %s band is %.2f' % (b, np.nanmean(yerr)))
 
-                    # s_res = results.x[2]
 
-                    all_params[sn][b].append(results.x)
+                    all_params[sn][bb].append(results.x)
 
-                    # print(b, results.x)
                 except:  # Runtime.Error:
                     traceback.print_exc()
-                    print('got error')
+                    # print(np.isnan(y))
+                    # print(np.isnan(tmpl_x))
+                    #
+                    # print(tmpl_x)
+                    #
+                    # print(np.log(t + 30))
+                    # print(gp.predict(y - tmpl_x, np.log(t + 30)))
+                    print('%s got error in %s band'%(sn, b))
                     # pl.savefig(output_directory+"GPfit%s_%s.png"%(sn,b))
                     continue
                 # print ("hyper parameters: ", gp.kernel)
@@ -525,6 +547,11 @@ if __name__ == '__main__':
             gp.compute(np.log(x + 30), yerr)
             mu, cov = gp.predict(y - tmpl_x, np.log(t + 30))
             std = np.sqrt(np.diag(cov))
+            variance_params[sn][bb]['mu_opt'] = mu
+            variance_params[sn][bb]['mu_std_opt'] = std
+            # print('Variance of GP model after epoch 20 days is %0.3f'%statistics.variance(mu[t>20]))
+            # print('Average GP model std after epoch 20 days is %0.3f'%(np.nanmean(std[t>20])))
+            # print('Average uncertainty in the data after epoch 20 days is %.2f' % (np.nanmean(yerr[x>20])))
             p1 = gp.kernel.parameter_vector
             # print (p1)
 
@@ -559,15 +586,18 @@ if __name__ == '__main__':
                 xl = pl.xlabel("log time (starting 30 days before peak)")
                 pl.savefig(output_directory + "gpFit_single_SN_plot/GPfit%s_%s_opt_test2.png" % (sn, bb))
 
-                pkl.dump(all_params, open(output_directory + "all_params_scipy_opt_test.pkl", "wb"))
+
                 pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "GPfit%s_%s.pkl" % (sn, bb), "wb"))
 
 
 
             else:
                 fig.tight_layout()
-                pl.savefig(output_directory+"gpFit_single_SN_plot/GPfit%s_%s_no_gpopt_2022.pdf" % (sn, bb))
+                pl.savefig(output_directory + "gpFit_single_SN_plot/GPfit%s_%s_no_gpopt_2022.pdf" % (sn, bb))
                 pl.savefig(output_directory + "GPfit%s_%s_no_gpopt_2022.png" % (sn, bb))
-                pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "gpFit_single_SN/GPfit%s_%s.pkl" % (sn, bb), "wb"))
+                pkl.dump((y, gp, tmpl['spl_med']),
+                         open(output_directory + "gpFit_single_SN/GPfit%s_%s.pkl" % (sn, bb), "wb"))
 
-    print('Total of %i SESNe were analyzed.'%count)
+    pkl.dump(variance_params, open(output_directory + "all_params_for_varience_analysis.pkl", "wb"))
+    pkl.dump(all_params, open(output_directory + "all_params_scipy_opt_test.pkl", "wb"))
+    print('Total of %i SESNe were analyzed.' % count)

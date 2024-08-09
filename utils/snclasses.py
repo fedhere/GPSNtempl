@@ -3091,7 +3091,7 @@ class mysn:
     #                                     'formats': ('S2', 'f', 'f', 'f', 'f')})
     #         self.lc['photcode'] = ['%02d' % int(p) for p in self.lc['photcode']]
     #         flux = 10 ** (-self.lc['ccmag'] / 2.5) * 5e10
-    #         dflux = flux * self.lc['dmag'] / LN10x2p5
+    #         dflux = flux * self.lc['dmag'] * LN10on2p5
     #         if superverbose:
     #             print(self.lc['mjd'])
     #             print(self.lc['ccmag'])
@@ -3110,7 +3110,7 @@ class mysn:
     #                                'formats': ('S2', 'f', 'f', 'f', 'f')})
     #
     #         flux = 10 ** (-self.lc['ccmag'] / 2.5) * 5e10
-    #         dflux = flux * self.lc['dmag'] / LN10x2p5
+    #         dflux = flux * self.lc['dmag'] * LN10on2p5
     #     except:
     #         if verbose:
     #             print("trying again", f)
@@ -3122,7 +3122,7 @@ class mysn:
     #             #                    self.lc['ccmag'] = self.lc['mag']
     #             flux = 10 ** (-lc['mag'] / 2.5) * 5e10
     #
-    #             dflux = flux * lc['dmag'] / LN10x2p5
+    #             dflux = flux * lc['dmag'] * LN10on2p5
     #
     #         except:
     #             if verbose:
@@ -3143,7 +3143,7 @@ class mysn:
     #                                                    'f', 'f')})
     #
     #         nirflux = 10 ** (-self.nirlc['mag'] / 2.5) * 5e10
-    #         nirdflux = nirflux * self.nirlc['dmag'] / LN10x2p5
+    #         nirdflux = nirflux * self.nirlc['dmag'] * LN10on2p5
     #         if len(self.nirlc['mjd']) > 0:
     #             self.nir = True
     #             lc = {}
@@ -3156,7 +3156,7 @@ class mysn:
     #             self.lc = lc
     #             flux = 10 ** (-lc['mag'] / 2.5) * 5e10
     #
-    #             dflux = flux * lc['dmag'] / LN10x2p5
+    #             dflux = flux * lc['dmag'] * LN10on2p5
     #         else:
     #             flux, dflux = None, None
     #     except ValueError:
@@ -5209,7 +5209,7 @@ class mysn:
                 .replace('sn20', '').strip()
 
         fileout = open(os.environ['SESNPATH'] + \
-                       "literaturedata/slc.sn" + \
+                       "literaturedata/phot/slc.sn" + \
                        self.snnameshort + '.f', 'w')
 
         for b in self.su.bands:
@@ -5275,7 +5275,7 @@ class mysn:
                                         'formats': ('S2', 'f', 'f', 'f', 'f')})
             self.lc['photcode'] = ['%02d' % int(p) for p in self.lc['photcode']]
             flux = 10 ** (-self.lc['ccmag'] / 2.5) * 5e10
-            dflux = flux * self.lc['dmag'] / LN10x2p5
+            dflux = flux * self.lc['dmag'] * LN10on2p5
             if superverbose:
                 print(self.lc['mjd'])
                 print(self.lc['ccmag'])
@@ -5293,7 +5293,7 @@ class mysn:
                                    'formats': ('S2', 'f', 'f', 'f', 'f')})
 
             flux = 10 ** (-self.lc['ccmag'] / 2.5) * 5e10
-            dflux = flux * self.lc['dmag'] / LN10x2p5
+            dflux = flux * self.lc['dmag'] * LN10on2p5
         except:
             if verbose:
                 print("trying again", f)
@@ -5305,7 +5305,7 @@ class mysn:
                 #                    self.lc['ccmag'] = self.lc['mag']
                 flux = 10 ** (-lc['mag'] / 2.5) * 5e10
 
-                dflux = flux * lc['dmag'] / LN10x2p5
+                dflux = flux * lc['dmag'] * LN10on2p5
 
             except:
                 if verbose:
@@ -5327,7 +5327,7 @@ class mysn:
             print ((self.nirlc['mjd']).size)
 
             nirflux = 10 ** (-self.nirlc['mag'] / 2.5) * 5e10
-            nirdflux = nirflux * self.nirlc['dmag'] / LN10x2p5
+            nirdflux = nirflux * self.nirlc['dmag'] * LN10on2p5
             if (self.nirlc['mjd']).size > 0:
                 self.nir = True
                 lc = {}
@@ -5340,7 +5340,7 @@ class mysn:
                 self.lc = lc
                 flux = 10 ** (-lc['mag'] / 2.5) * 5e10
 
-                dflux = flux * lc['dmag'] / LN10x2p5
+                dflux = flux * lc['dmag'] * LN10on2p5
             else:
                 flux, dflux = None, None
         except ValueError:
