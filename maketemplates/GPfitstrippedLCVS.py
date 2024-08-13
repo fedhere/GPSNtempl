@@ -188,12 +188,14 @@ if __name__ == '__main__':
         else:
             allsne = pd.read_csv(os.getenv("SESNPATH") +
                                  "utils/SESNessentials.csv", encoding="ISO-8859-1")['SNname'].values
+            types = pd.read_csv(os.getenv("SESNPATH") +
+                                 "utils/SESNessentials.csv", encoding="ISO-8859-1")['Type'].values
 
     all_params = {}
     count = 0
     variance_params = {}
     print('Number SNe read from the file %i' % len(allsne))
-    for sn in allsne:
+    for sn_i, sn in enumerate(allsne):
 
 
         if sn in fast_evolving:
@@ -259,6 +261,7 @@ if __name__ == '__main__':
                 print(b, thissn.filters[b])
                 continue
             all_params[sn][bb] = []
+            variance_params[sn]['type'] = types[sn_i]
             templatePkl = "outputs/Ibc_template_files/UberTemplate_%s.pkl" % (b + 'p' if b in ['u', 'r', 'i']
                                                                               else b)
             # tmpl = pkl.load(open(templatePkl, "rb"))
@@ -297,6 +300,7 @@ if __name__ == '__main__':
 
             y = -thissn.photometry[b]['mag']
 
+
             yerr = thissn.photometry[b]['dmag']
 
             if b == 'g':
@@ -329,7 +333,8 @@ if __name__ == '__main__':
             if len(x) == 0:
                 print(b, ': No data points within the limits.')
                 continue
-
+            variance_params[sn][bb] = {}
+            variance_params[sn][bb]['y_mag'] = -y
             t = np.linspace(x.min(), x.max(), 100)
 
             ####################################
@@ -446,7 +451,7 @@ if __name__ == '__main__':
             # print(b, x, tmpl_x)
             mu, cov = gp.predict(y - tmpl_x, np.log(t + 30))
             std = np.sqrt(np.diag(cov))
-            variance_params[sn][bb] = {}
+
             variance_params[sn][bb]['mu_init'] = mu
             variance_params[sn][bb]['mu_std_init'] = std
             variance_params[sn][bb]['smoothness_init'] = variance_gen(np.log(t + 30), y - tmpl_x, gp)
