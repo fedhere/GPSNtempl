@@ -113,12 +113,6 @@ def select2ObsPerDay(data):
             theseindx = np.where((data['id'] == sid) *
                                  (dataTimeByDay == i + minx))[0]
             choices = np.random.choice(theseindx, len(theseindx) - 2)
-            # print theseindx[np.argsort(data['yerr'][theseindx])],
-            # print data['yerr'][theseindx][np.argsort(data['yerr'][theseindx])]
-
-            # print data['mask']#[thissn]
-            # data['mask'][choices] = True
-            # print theseindx[np.argsort(data['yerr'][theseindx])][2:] #= True
             data['mask'][theseindx[np.argsort(data['yerr'][theseindx])][2:]] = True
     return data
 

@@ -330,11 +330,13 @@ if __name__ == '__main__':
             yerr = yerr[np.where(np.array((x < up_lim) & (x > low_lim)))[0]]
             x = x[np.where(np.array((x < up_lim) & (x > low_lim)))[0]]
 
+            # yerr[yerr<0.01] = 0.01
             if len(x) == 0:
                 print(b, ': No data points within the limits.')
                 continue
-            variance_params[sn][bb] = {}
-            variance_params[sn][bb]['y_mag'] = -y
+            if len(y)>=5:
+                variance_params[sn][bb] = {}
+                variance_params[sn][bb]['y_mag'] = -y
             t = np.linspace(x.min(), x.max(), 100)
 
             ####################################
@@ -589,20 +591,19 @@ if __name__ == '__main__':
                 # spl = InterpolatedUnivariateSpline(templ.phs, ysmooth)
 
                 xl = pl.xlabel("log time (starting 30 days before peak)")
-                pl.savefig(output_directory + "gpFit_single_SN_plot/GPfit%s_%s_opt_test2.png" % (sn, bb))
+                pl.savefig(output_directory + "no_error_cap/plots/GPfit%s_%s_gpopt_2024_no_error_cap.png" % (sn, bb))
 
 
-                pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "GPfit%s_%s.pkl" % (sn, bb), "wb"))
+                pkl.dump((y, gp, tmpl['spl_med']), open(output_directory + "no_error_cap/pkls/GPfit%s_%s.pkl" % (sn, bb), "wb"))
 
 
 
             else:
                 fig.tight_layout()
-                pl.savefig(output_directory + "gpFit_single_SN_plot/GPfit%s_%s_no_gpopt_2022.pdf" % (sn, bb))
-                pl.savefig(output_directory + "GPfit%s_%s_no_gpopt_2022.png" % (sn, bb))
+                pl.savefig(output_directory + "no_error_cap/plots/GPfit%s_%s_gpopt_2024_no_error_cap.pdf" % (sn, bb))
                 pkl.dump((y, gp, tmpl['spl_med']),
-                         open(output_directory + "gpFit_single_SN/GPfit%s_%s.pkl" % (sn, bb), "wb"))
+                         open(output_directory + "no_error_cap/pkls/GPfit%s_%s.pkl" % (sn, bb), "wb"))
 
-    pkl.dump(variance_params, open(output_directory + "all_params_for_varience_analysis.pkl", "wb"))
-    pkl.dump(all_params, open(output_directory + "all_params_scipy_opt_test.pkl", "wb"))
+    pkl.dump(variance_params, open(os.getenv("SESNPATH") + "maketemplates/data/all_data.pkl", "wb"))
+    pkl.dump(all_params, open(output_directory + "no_error_cap/all_params_scipy_opt_test.pkl", "wb"))
     print('Total of %i SESNe were analyzed.' % count)
