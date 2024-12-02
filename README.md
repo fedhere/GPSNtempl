@@ -9,9 +9,9 @@ The instruction on how to read and use the final templates can be found here: ["
 ------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------
 
-Instructions for running the codes to regenerate the templates:
+Setting up:
 
-This repo works with a few utility codes, which are stored in https://github.com/fedhere/SESNCfAlib and https://github.com/fedhere/fedsastroutils.
+This repo works with a few utility codes, which are stored in [https://github.com/fedhere/SESNCfAlib](https://github.com/fedhere/SESNCfAlib) and [https://github.com/fedhere/fedsastroutils](https://github.com/fedhere/fedsastroutils).
 
 
 First, set the following environmental variables (assuming bash syntax):
