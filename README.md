@@ -50,7 +50,11 @@ column 6: MAG (Natural system)
 
 For reproducing the process of generating the templates, for example, if new data is added, follow the instructions below:
 
-To be completed soon...
-
+1) After converting your light curves in the format above, put it in the folder "literaturedata/phot" if it has optical photometry and in "literaturedata/nirphot" if it has NIR and UV photometry. Make sure the format of the file name is the same as the existing files. For reference, you can use the notebook at "/maketemplates/add_any_new_SN_lc.py" to find an example of how format conversion is done.
+2) The next step is to regenerate the Ibc templates for each band. This template will be used as an average template to subtract from individual light curves so we can fit the residual with GPs. Use the code at "maketemplates/Ibc_templates.py" to generate the Ibc templates. If you give the band name as an argument, it will only generate a Ibc template for that band. If no bands are given, it will generate Ibc templates for all bands.
+3) Here, we run the code at "maketemplates/GPfitstrippedLCVS.py" to generate GP fits to the light curves in our sample. We first do the fits while optimizing for the best hyperparameters. So, at this step, you should put FITGP=True inside the code. You have the option to do it for one SN or all of the SNe in your sample. If no arguments are given, this will be done for all SNe. If the name of the SN is given as an argument, only the fit for that SN in all of its available bands will be done. You also have the option to do the fits for one subtype at a time. To do so, inside the code, put perType = True and put tp = your selected subtype. All of the best-fit hyperparameters will be saved in "maketemplates/outputs/GP_template_files/all_SNe_data_and_GP_fits.pkl".
+4) Next, we analyze the GP fits visually, using a user interface. Running the code at "maketemplates/vetGP.py", plots of GP fits will be shown to you. If you find them acceptable, you type "Y", and if not, you type "N". The results will be saved in a csv file at "maketemplates/good_GP_OPT2.csv".
+5) Next, we review the distribution of the hyperparameters per subtype of SESNe for the ones that received "Y" when they were being vetted. The Jupiter notebook at "maketemplates/get_final_gp_hyperparams.py" can be used for this purpose.
+6) To be completed.... 
 
 
