@@ -1,8 +1,11 @@
 This repository contains the codes, data, plots, tables and results of the paper "Multi-filter UV to NIR Data-driven Light Curve Templates for Stripped Envelope Supernovae" published in ApJS at https://iopscience.iop.org/article/10.3847/1538-4365/ad7eaa.
 
+------------------------------------------------------------------------------------------------------------------------------------------------
+
 The final Ibc and GP templates can be found in this address folder ["maketemplates/share_tmpls/all_templates.pkl"](https://github.com/fedhere/GPSNtempl/blob/main/maketemplates/share_tmpls/all_templates.pkl).
 The instruction on how to read and use the final templates can be found here: ["maketemplates/share_tmpls/Reading Ibc and GP templates.ipynb"](https://github.com/fedhere/GPSNtempl/blob/main/maketemplates/share_tmpls/Reading%20Ibc%20and%20GP%20templates.ipynb).
 
+------------------------------------------------------------------------------------------------------------------------------------------------
 
 Instructions for running the codes to regenerate the templates:
 
