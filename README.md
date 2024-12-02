@@ -1,10 +1,12 @@
 This repository contains the codes, data, plots, tables and results of the paper "Multi-filter UV to NIR Data-driven Light Curve Templates for Stripped Envelope Supernovae" published in ApJS at https://iopscience.iop.org/article/10.3847/1538-4365/ad7eaa.
 
 ------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------
 
 The final Ibc and GP templates can be found in this address folder ["maketemplates/share_tmpls/all_templates.pkl"](https://github.com/fedhere/GPSNtempl/blob/main/maketemplates/share_tmpls/all_templates.pkl).
 The instruction on how to read and use the final templates can be found here: ["maketemplates/share_tmpls/Reading Ibc and GP templates.ipynb"](https://github.com/fedhere/GPSNtempl/blob/main/maketemplates/share_tmpls/Reading%20Ibc%20and%20GP%20templates.ipynb).
 
+------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------
 
 Instructions for running the codes to regenerate the templates:
@@ -14,10 +16,10 @@ This repo works with a few utility codes, which are stored in https://github.com
 
 First, set the following environmental variables (assuming bash syntax):
 
-export SESNPATH = "path_to_main_directory/GPSNtempl/maketemplates/"
-export SESNCFAlib = "path_to_library/SESNCFAlib"
-export UTILPATH = "path_to_randomutils/fedastroutils/"
-
+- export SESNPATH = "path_to_main_directory/GPSNtempl/maketemplates/"
+- export SESNCFAlib = "path_to_library/SESNCFAlib"
+- export UTILPATH = "path_to_randomutils/fedastroutils/"
+------------------------------------------------------------------------------------------------------------------------------------------------
 
 The data is downloaded from the OSNC and is stored in the "literature" folder in CfA SN data format. Any added SN photometry should be saved in this format and saved in the "literature" folder. An example of the few first lines of the data files are shown below:
 
@@ -47,6 +49,7 @@ column 5: ERROR
 
 column 6: MAG (Natural system)
 
+------------------------------------------------------------------------------------------------------------------------------------------------
 
 For reproducing the process of generating the templates, for example, if new data is added, follow the instructions below:
 
