@@ -161,8 +161,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
 
         if perType:
-            allsne_list = pd.read_csv(os.getenv("SESNPATH") +
-                                      "utils/SESNessentials.csv", encoding="ISO-8859-1")
+
+
             allsne = [sys.argv[1]]
             if allsne_list[allsne_list.SNname == allsne[0]].Type.values[0] == tp:
                 pass

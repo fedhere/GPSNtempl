@@ -7,18 +7,18 @@ import pandas as pd
 import numpy as np
 import traceback
 import seaborn as sns
+import matplotlib as mpl
 
 #s = json.load( open(os.getenv ('PUI2015')+"/fbb_matplotlibrc.json") )
 #pl.rcParams.update(s)
 
-cmd_folder = os.path.realpath(os.getenv("SESNCFAlib"))
-
+cmd_folder = os.getenv("SESNPATH") + "/utils"
 if cmd_folder not in sys.path:
-     sys.path.insert(0, cmd_folder)
+    sys.path.insert(0, cmd_folder)
 
 import snclasses as snstuff
 import templutils as templutils
-import matplotlib as mpl
+
 mpl.use('agg')
 
 avoid=["03dh"]
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
 
 
-               path = "outputs/GPalltemplfit_%s_%s_V0.pkl"%(SNTYPE,bb)
+               path = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl"%(SNTYPE,bb)
                tmpl_ = pkl.load(open(path, "rb"))
 
                #         print(tmpl_['rollingMedian'])
@@ -331,7 +331,7 @@ if __name__ == '__main__':
 
 
 
-                    pklf = "outputs/GPfit%s_%s.pkl"%(sn,b + 'p' if b in ['u', 'r', 'i']
+                    pklf = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPfit%s_%s.pkl"%(sn,b + 'p' if b in ['u', 'r', 'i']
                                                          else b)
                     if not os.path.isfile(pklf):
                          print ("missing file ", pklf)
@@ -516,14 +516,14 @@ if __name__ == '__main__':
 
                figs_com2[j].text(0.04, 0.5, 'Relative Magnitude', va='center', rotation='vertical', size=30)
 
-               figs_com2[j].savefig("outputs/gp_templates/GPMedtemplfit_%s_%s_outlier2.pdf"%(SNTYPE,b + 'p' if b in ['u', 'r', 'i']
+               figs_com2[j].savefig(os.getenv("SESNPATH")+"extra_outputs/GPMedtemplfit_%s_%s_outlier2.pdf"%(SNTYPE,b + 'p' if b in ['u', 'r', 'i']
                                                          else b),  bbox_inches='tight')
                print(SNTYPE, b, outliers[SNTYPE][b])
 
      # df = pd.DataFrame({})
      df = pd.DataFrame.from_dict(counter, orient='index').reset_index(drop=True)
      df = df.rename(index = {0:'Ib',1:'IIb',2:'Ic',3:'Ic-bl', 4:'Ibn'})
-     df.to_csv("outputs/counter_SN_lightcurves_per_band_per_subtype.csv")
+     df.to_csv(os.getenv("SESNPATH")+"extra_outputs/counter_SN_lightcurves_per_band_per_subtype.csv")
      # print(b , outliers)
 
 

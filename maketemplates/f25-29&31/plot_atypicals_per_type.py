@@ -149,7 +149,7 @@ for i, sn in enumerate(atypicals):
     # Each atypical photometry is read here
     thissn = snstuff.mysn(sn, addlit=True)
     thissn.readinfofileall(verbose=False, earliest=False, loose=True)
-    thissn.printsn()
+    # thissn.printsn()
     lc, flux, dflux, snname = thissn.loadsn2(verbose=False)
     thissn.setphot()
     thissn.getphot()
@@ -183,6 +183,8 @@ for i, sn in enumerate(atypicals):
             xmin = thissn.photometry[b]['mjd'].min()
             t_max = thissn.Vmax
 
+            
+
             if xmin - t_max < -1000:
                 x = thissn.photometry[b]['mjd'] - t_max + 2400000.5
 
@@ -192,7 +194,6 @@ for i, sn in enumerate(atypicals):
                 x = thissn.photometry[b]['mjd'] - t_max
 
             y = thissn.photometry[b]['mag']
-
 
 
             if np.isnan(t_max):
@@ -252,16 +253,16 @@ for i, sn in enumerate(atypicals):
                 y = min_y - y
 
             yerr = thissn.photometry[b]['dmag']
-                    
+
 
             if sn == 'OGLE-2012-SN-006' and (b == 'B' or b == 'R'):
                 continue
 
-            if sn == 'SN2007ke' and (b == 'V'):
+            if sn == 'sn2007ke' and (b == 'V'):
                 continue
-            if sn == 'SN2017ein' and (b == 'I'):
+            if sn == 'sn2017ein' and (b == 'I'):
                 continue
-            if sn == 'SN2007ke' and (b == 'B'):
+            if sn == 'sn2007ke' and (b == 'B'):
                 continue
 
             if sn == 'OGLE-2012-SN-006' and (b == 'I'):
@@ -290,9 +291,14 @@ for i, sn in enumerate(atypicals):
                     atypicals_phot[b]['subtype'].append('Ibn')
 
             else:
+
                 y = y[x < 100]
                 yerr = yerr[x < 100]
                 x = x[x < 100]
+                if x[0]>10:
+                    continue
+
+
                 atypicals_phot[b]['x'].append(x)
                 atypicals_phot[b]['y'].append(y)
                 atypicals_phot[b]['yerr'].append(yerr)
@@ -314,7 +320,7 @@ else:
     fig, axs = plt.subplots(int(round(len(bands) / 2, 0)), 2, figsize=(50, 15 * int(round(len(bands) / 2, 0))),
                             sharey=True, sharex=True)
 
-    subplot_indexes = {'B': 0, 'u': 1,
+    subplot_indexes = {'u': 0, 'B': 1,
                        'g': 2, 'V': 3,
                        'r': 4, 'R': 5,
                        'i': 6, 'I': 7}
@@ -377,7 +383,6 @@ for i, b in enumerate(bands):
                                       color=atypicals_colors[atypicals_phot[b]['name'][j]],
                                       label=label_temp)
 
-
     axs.flatten()[index].plot(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingMedian'],
                           color='k', linewidth=8)
     axs.flatten()[index].fill_between(tmpl[b][SNTYPE]['t'], tmpl[b][SNTYPE]['rollingPc75'], tmpl[b][SNTYPE]['rollingPc25'],
@@ -394,7 +399,7 @@ labels = []
 for i in range(len(axs.flatten())):
     labels += (axs.flatten()[i]).get_legend_handles_labels()[1]
 if len(bands) == 7:
-    fig.delaxes(axs.flatten()[1])
+    fig.delaxes(axs.flatten()[0])
 hl = [[], []]
 
 dups = duplicates(labels)

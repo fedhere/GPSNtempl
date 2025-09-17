@@ -10,16 +10,11 @@ import argparse
 
 try:
     os.environ['SESNPATH']
-    os.environ['SESNCFAlib']
-
 except KeyError:
-    print("must set environmental variable SESNPATH and SESNCfAlib")
+    print("must set environmental variable SESNPATH")
     sys.exit()
 
-cmd_folder = os.getenv("SESNCFAlib")
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
-cmd_folder = os.getenv("SESNCFAlib") + "/templates"
+cmd_folder = os.getenv("SESNPATH") + "/maketemplates"
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
@@ -40,7 +35,7 @@ args = parse_options()
 if not args.dir is None:
     output_directory = args.dir
 else:
-    output_directory = './../../GPSNtempl_output/'
+    output_directory = './../../../GPSNtempl_output/'
 
 SNTYPES = ['Ib', 'IIb', 'Ic', 'Ic-bl', 'Ibn']
 bands = {'u': [0, 1],
@@ -67,14 +62,16 @@ colorTypes = {'IIb': 'FireBrick',
 
 tmpl = {}
 
-directory = glob.glob(os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/*")
+directory = glob.glob(os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/*")
 
 if __name__ == '__main__':
 
     for i, tp in tqdm(enumerate(list(combinations(SNTYPES, 2)))):
+        
 
         tp1 = tp[0]
         tp2 = tp[1]
+
 
         lim00 = [-3.0, 0.5]
         lim01 = [-2.875, -2.525]
@@ -108,8 +105,8 @@ if __name__ == '__main__':
             if b == 'r':
                 bb = 'rp'
 
-            path1 = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (tp1, bb)
-            path2 = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (tp2, bb)
+            path1 = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (tp1, bb)
+            path2 = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (tp2, bb)
 
             if path1 in directory and path2 in directory:
                 pass
@@ -119,7 +116,7 @@ if __name__ == '__main__':
 
             band_new.append(b)
 
-        n = len(band_new)
+        n = bands[band_new[-1]][0]#len(band_new)
 
         fig = plt.figure(figsize=(44, 54))
 
@@ -130,8 +127,9 @@ if __name__ == '__main__':
 
         marker = 0
         for c, b in enumerate(band_new):
+
             subplot_num = bands[b][0]
-            if subplot_num > n - 1:
+            if subplot_num > n:
                 subplot_num = c
                 continue
 
@@ -157,8 +155,8 @@ if __name__ == '__main__':
                 a0 = fig.add_subplot(gs00[0], sharey=a00, sharex=a00)
                 a1 = fig.add_subplot(gs00[1], sharex=a00, sharey=a11)
 
-            path1 = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (tp1, bb)
-            path2 = os.getenv("SESNPATH") + "maketemplates/outputs/GPs_2022/GPalltemplfit_%s_%s_V0.pkl" % (tp2, bb)
+            path1 = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (tp1, bb)
+            path2 = os.getenv("SESNPATH") + "maketemplates/outputs/GP_template_files/GPalltemplfit_%s_%s_V0.pkl" % (tp2, bb)
 
             tmpl_1 = pkl.load(open(path1, "rb"))
             tmpl_2 = pkl.load(open(path2, "rb"))
@@ -244,6 +242,7 @@ if __name__ == '__main__':
 
             if c == 1:
                 h, l = a0.get_legend_handles_labels()
+
         fig.legend(h, l, loc='upper center', ncol=2, prop={'size': 60}, bbox_to_anchor=(0.5, 1.03))
 
         fig.text(0.07, 0.5, 'Relative magnitude', va='center', rotation='vertical', size=60)

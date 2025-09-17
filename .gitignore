@@ -5,7 +5,7 @@ npm-debug.log
 *.pyc
 .env.test
 .env.production
-.DS_Store
+*.DS_Store
 .npm
 .eslintcache
 logs/
